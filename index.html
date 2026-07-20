@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Калькулятор плитки">
+<title>Онлайн-калькулятор плитки</title>
+<style>
+  :root{
+    --card:#ffffff;
+    --ink:#0f172a;
+    --muted:#64748b;
+    --line:#e2e8f0;
+    --brand:#2563eb;
+    --brand-dark:#1d4ed8;
+    --ok:#16a34a;
+    --ok-bg:#dcfce7;
+    --err:#dc2626;
+    --err-bg:#fef2f2;
+    --load-bg:#eff6ff;
+    --load:#1d4ed8;
+    --radius:16px;
+    --shadow:0 10px 30px rgba(2,6,23,.12);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:rgba(0,0,0,0)}
+  html,body{height:100%}
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink);
+    background-color:#0f172a; /* фолбэк для старых Safari без поддержки градиента */
+    background:-webkit-linear-gradient(300deg,#0f172a 0%,#1e293b 45%,#334155 100%);
+    background:linear-gradient(160deg,#0f172a 0%,#1e293b 45%,#334155 100%);
+    min-height:100vh;
+    min-height:-webkit-fill-available;
+    padding:24px 14px 60px;
+    padding-left:calc(14px + env(safe-area-inset-left));
+    padding-right:calc(14px + env(safe-area-inset-right));
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:640px;margin:0 auto}
+  header{text-align:center;margin-bottom:18px}
+  header h1{
+    color:#fff;font-size:26px;font-weight:800;letter-spacing:-.5px;
+    display:flex;align-items:center;justify-content:center;gap:10px;
+  }
+  header .icon{
+    width:38px;height:38px;border-radius:10px;
+    background:linear-gradient(135deg,#3b82f6,#6366f1);
+    display:inline-flex;align-items:center;justify-content:center;font-size:20px;
+    box-shadow:0 6px 16px rgba(59,130,246,.45);
+  }
+  header p{color:#94a3b8;font-size:13px;margin-top:6px}
+
+  /* status */
+  #status{
+    margin:14px 0 0;padding:11px 14px;border-radius:12px;font-size:14px;font-weight:600;
+    display:flex;align-items:center;gap:9px;transition:.2s;
+  }
+  #status .dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .st-load{background:var(--load-bg);color:var(--load)}
+  .st-load .dot{background:var(--load);animation:pulse 1s infinite}
+  .st-ok{background:var(--ok-bg);color:#166534}
+  .st-ok .dot{background:var(--ok)}
+  .st-err{background:var(--err-bg);color:var(--err)}
+  .st-err .dot{background:var(--err)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+
+  .card{
+    background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+    padding:22px 20px;margin-top:16px;
+  }
+  .field{margin-bottom:18px;position:relative}
+  .field:last-child{margin-bottom:0}
+  label{display:block;font-size:13px;font-weight:700;color:#334155;margin-bottom:7px}
+  label .hint{font-weight:500;color:var(--muted)}
+  input[type=text]{
+    width:100%;padding:13px 14px;font-size:16px;border:1.5px solid var(--line);
+    border-radius:12px;outline:none;transition:.15s;background:#f8fafc;color:var(--ink);
+    -webkit-appearance:none;appearance:none;-webkit-border-radius:12px; /* убираем native-вид iOS Safari */
+  }
+  input[type=text]:focus{border-color:var(--brand);background:#fff;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+  input:disabled{opacity:.6;cursor:not-allowed}
+
+  /* dropdown */
+  .dropdown{
+    position:absolute;left:0;right:0;top:100%;margin-top:6px;z-index:40;
+    background:#fff;border:1px solid var(--line);border-radius:12px;
+    box-shadow:0 14px 34px rgba(2,6,23,.18);max-height:320px;overflow-y:auto;display:none;
+    -webkit-overflow-scrolling:touch; /* плавный инерционный скролл в iOS Safari */
+  }
+  .dropdown.open{display:block}
+  .opt{padding:11px 14px;cursor:pointer;border-bottom:1px solid #f1f5f9;transition:.1s}
+  .opt:last-child{border-bottom:none}
+  .opt:hover{background:#eff6ff}
+  .opt .t1{font-size:14px;font-weight:600;color:var(--ink)}
+  .opt .t2{font-size:12px;color:var(--muted);margin-top:2px}
+  .opt .badge{
+    display:inline-block;font-size:11px;font-weight:700;color:var(--brand);
+    background:#eff6ff;border-radius:6px;padding:1px 7px;margin-right:6px;
+  }
+  .opt-empty{padding:14px;text-align:center;color:var(--muted);font-size:14px}
+
+  .row{display:flex;gap:14px}
+  .row .field{flex:1}
+
+  .btn{
+    width:100%;padding:15px;font-size:16px;font-weight:800;color:#fff;border:none;
+    border-radius:12px;cursor:pointer;margin-top:4px;
+    -webkit-appearance:none;appearance:none;
+    background:var(--brand-dark); /* solid-фолбэк для старых Safari */
+    background:-webkit-linear-gradient(315deg,var(--brand),var(--brand-dark));
+    background:linear-gradient(135deg,var(--brand),var(--brand-dark));
+    box-shadow:0 8px 20px rgba(37,99,235,.35);transition:.15s;
+  }
+  .btn:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(37,99,235,.45)}
+  .btn:active{transform:translateY(0)}
+
+  /* results */
+  #results{display:none;margin-top:16px}
+  .res-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+  .res-cell{
+    background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:14px;
+  }
+  .res-cell .k{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:4px}
+  .res-cell .v{font-size:20px;font-weight:800;color:var(--ink)}
+  .res-cell.total{
+    grid-column:1 / -1;background:linear-gradient(135deg,#eff6ff,#dbeafe);border-color:#bfdbfe;
+  }
+  .res-cell.total .v{color:var(--brand-dark);font-size:26px}
+  .details{
+    font-size:12.5px;color:var(--muted);background:#f8fafc;border:1px dashed var(--line);
+    border-radius:10px;padding:11px 13px;line-height:1.6;
+  }
+  #warn{
+    margin-top:14px;padding:14px 16px;border-radius:12px;font-weight:700;
+    color:#7c2d12;background:linear-gradient(135deg,#ffedd5,#fed7aa);
+    border:1.5px solid #fdba74;font-size:14px;display:none;align-items:center;gap:10px;
+  }
+  #warn.show{display:flex}
+  #warn .wi{font-size:20px;flex:none}
+  #inline-err{
+    display:none;margin-top:12px;padding:12px 14px;border-radius:10px;
+    background:var(--err-bg);color:var(--err);font-size:14px;font-weight:600;
+  }
+  #inline-err.show{display:block}
+
+  @media(max-width:480px){
+    header h1{font-size:22px}
+    .card{padding:18px 15px}
+    .row{flex-direction:column;gap:0}
+    .res-cell .v{font-size:18px}
+    .res-cell.total .v{font-size:23px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><span class="icon">▦</span> Калькулятор плитки</h1>
+    <p>Расчёт упаковок, площади и стоимости по актуальной базе</p>
+  </header>
+
+  <div id="status" class="st-load"><span class="dot"></span><span id="status-text">Загрузка данных…</span></div>
+
+  <div class="card">
+    <div class="field">
+      <label>Плитка <span class="hint">— поиск по артикулу, названию или размеру</span></label>
+      <input type="text" id="search" placeholder="Начните вводить…" autocomplete="off" disabled>
+      <div class="dropdown" id="dropdown"></div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label>Необходимая площадь, м²</label>
+        <input type="text" id="area" placeholder="например 24,5" inputmode="decimal" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Цена за м², руб</label>
+        <input type="text" id="price" placeholder="авто / вручную" inputmode="decimal" autocomplete="off">
+      </div>
+    </div>
+
+    <button class="btn" id="calcBtn" onclick="window.calculate()">Рассчитать</button>
+    <div id="inline-err"></div>
+  </div>
+
+  <div id="results">
+    <div class="card">
+      <div class="res-grid">
+        <div class="res-cell"><div class="k">Упаковок</div><div class="v" id="r-packs">—</div></div>
+        <div class="res-cell"><div class="k">Площадь к покупке</div><div class="v" id="r-area">—</div></div>
+        <div class="res-cell" id="c-pieces"><div class="k">Штук всего</div><div class="v" id="r-pieces">—</div></div>
+        <div class="res-cell" id="c-weight"><div class="k">Вес, кг</div><div class="v" id="r-weight">—</div></div>
+        <div class="res-cell total"><div class="k">Итого</div><div class="v" id="r-total">—</div></div>
+      </div>
+      <div class="details" id="r-details">—</div>
+      <div id="warn"><span class="wi">⚠️</span><span id="warn-text"></span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   Онлайн-калькулятор плитки — единый файл
+   Источник: Google Sheets через JSONP (Google Visualization API)
+   ============================================================ */
+
+var SHEET_ID = '1dqYgo6PI2ttiQgbF8QhLzOI19VSFSEdthK_xDX5Mk04';
+var SHEETS = ['60*60', '60*120', '60x60', '60x120', '60х60', '60х120'];
+
+var TILES = [];          // итоговая база плитки
+var SEEN = {};           // защита от дублей (Артикул+Размер)
+var selectedTile = null; // скрыто сохранённый выбранный объект
+
+/* ---------- Жёсткие параметры по размеру ---------- */
+var HARD = {
+  '60x60':  { pack: 1.8,  pieces: 5, weight: 34 },
+  '60x120': { pack: 1.44, pieces: 2, weight: 27 }
+};
+
+/* Нормализация размера: любые написания -> '60x60' / '60x120' / '' */
+function normSize(raw){
+  if(raw == null) return '';
+  var s = String(raw).toLowerCase();
+  s = s.replace(/[хx*×]/g, 'x');       // русская х, латинская x, звёздочка, ×
+  s = s.replace(/[^0-9x]/g, '');        // оставляем только цифры и x
+  // миллиметры -> сантиметры
+  s = s.replace(/600x600/, '60x60')
+       .replace(/600x1200/, '60x120')
+       .replace(/1200x600/, '60x120');
+  if(/^60x60$/.test(s)) return '60x60';
+  if(/^(60x120|120x60)$/.test(s)) return '60x120';
+  return '';
+}
+
+/* Красивое отображение размера */
+function prettySize(key){
+  if(key === '60x60') return '60х60';
+  if(key === '60x120') return '60х120';
+  return '';
+}
+
+/* ---------- Жёсткая очистка чисел ---------- */
+function toNumber(v){
+  if(v == null) return NaN;
+  if(typeof v === 'number') return v;
+  var s = String(v).trim();
+  if(s === '') return NaN;
+  s = s.replace(/\s/g, '').replace(/ /g, '').replace(',', '.'); // убрать пробелы, запятая -> точка
+  s = s.replace(/[^0-9.\-]/g, '');                                   // только цифры, точка, минус
+  var n = parseFloat(s);
+  return isNaN(n) ? NaN : n;
+}
+
+/* Форматирование числа с пробелами-разделителями тысяч */
+function fmt(n, dec){
+  if(dec == null) dec = 0;
+  var x = Number(n);
+  if(!isFinite(x)) x = 0;
+  var parts = x.toFixed(dec).split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return parts.join('.');
+}
+
+/* ---------- Умный поиск индексов колонок ---------- */
+function findCols(headers){
+  var h = headers.map(function(x){ return String(x == null ? '' : x).toLowerCase().trim(); });
+  function find(keys){
+    for(var i=0;i<h.length;i++){
+      for(var k=0;k<keys.length;k++){
+        if(h[i].indexOf(keys[k]) !== -1) return i;
+      }
+    }
+    return -1;
+  }
+  var idx = {
+    article: find(['артикул','артик']),
+    name:    find(['назв','наимен']),
+    size:    find(['формат','размер','разм']),
+    pack:    find(['пакинг','упаковк','кв.м','кв. м','м2','packing']),
+    price:   find(['цена','стоимост','прайс']),
+    stock:   find(['москва'])
+  };
+  if(idx.stock === -1) idx.stock = find(['склад','остаток','остатки']);
+  // Запасной вариант: в этих таблицах артикул — первый столбец,
+  // а его заголовок может содержать пример артикула вместо слова «артикул».
+  if(idx.article === -1) idx.article = 0;
+  return idx;
+}
+
+/* ---------- JSONP-загрузка одного листа ---------- */
+var pending = 0;
+
+function loadSheet(sheetName, cbName){
+  var url = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID +
+            '/gviz/tq?tqx=out:json;responseHandler:' + cbName +
+            '&sheet=' + encodeURIComponent(sheetName);
+  var s = document.createElement('script');
+  s.src = url;
+  s.onerror = function(){ finishOne(); };
+  document.head.appendChild(s);
+}
+
+function handleData(json, sheetName){
+  try{
+    if(!json || !json.table || !json.table.cols){ return; }
+    var cols = json.table.cols;
+    var rows = json.table.rows || [];
+
+    // Заголовки: сначала метки колонок; если пусто — первая строка данных.
+    var headers = cols.map(function(c){ return c && c.label ? c.label : ''; });
+    var hasLabels = headers.some(function(x){ return String(x).trim() !== ''; });
+
+    var dataRows = rows;
+    if(!hasLabels && rows.length){
+      headers = (rows[0].c || []).map(function(cell){
+        return cell ? (cell.f != null ? cell.f : cell.v) : '';
+      });
+      dataRows = rows.slice(1);
+    }
+
+    var idx = findCols(headers);
+    if(idx.article === -1 && idx.name === -1 && idx.size === -1) return; // не тот лист
+
+    for(var r=0; r<dataRows.length; r++){
+      var c = dataRows[r].c || [];
+      function cell(i){
+        if(i < 0 || !c[i]) return '';
+        var o = c[i];
+        return (o.f != null ? o.f : (o.v != null ? o.v : ''));
+      }
+      var article = String(cell(idx.article)).trim();
+      var name    = String(cell(idx.name)).trim();
+      var sizeRaw = String(cell(idx.size)).trim();
+      var priceN  = toNumber(cell(idx.price));
+      var stockN  = toNumber(cell(idx.stock));
+      var packN   = toNumber(cell(idx.pack));
+
+      if(!article && !name && !sizeRaw) continue; // пустая строка
+
+      var packRaw = String(cell(idx.pack)).trim();
+      var sizeKey = normSize(sizeRaw) || normSize(name) || normSize(packRaw) || normSize(sheetName);
+      if(!sizeKey) continue; // калькулятор работает только с 60x60 и 60x120
+
+      // Жёсткие параметры перекрывают то, что в таблице
+      var pack = packN, pieces = null, weight = null;
+      if(sizeKey && HARD[sizeKey]){
+        pack   = HARD[sizeKey].pack;
+        pieces = HARD[sizeKey].pieces;
+        weight = HARD[sizeKey].weight;
+      }
+      if(!isFinite(pack) || pack <= 0) continue; // без площади упаковки расчёт невозможен
+
+      // Защита от дублей: Артикул + Размер
+      var dedupKey = (article || name).toLowerCase() + '|' + (sizeKey || sizeRaw.toLowerCase());
+      if(SEEN[dedupKey]) continue;
+      SEEN[dedupKey] = true;
+
+      TILES.push({
+        article: article,
+        name: name || article,
+        sizeKey: sizeKey,
+        sizeLabel: sizeKey ? prettySize(sizeKey) : sizeRaw,
+        pack: pack,
+        pieces: pieces,
+        weight: weight,
+        price: isFinite(priceN) ? priceN : null,
+        stock: isFinite(stockN) ? stockN : null
+      });
+    }
+  }catch(e){ /* игнорируем ошибочный лист */ }
+}
+
+function finishOne(){
+  pending--;
+  if(pending <= 0) allDone();
+}
+
+function allDone(){
+  var st = document.getElementById('status');
+  var stt = document.getElementById('status-text');
+  if(TILES.length > 0){
+    st.className = 'st-ok';
+    stt.textContent = 'Успешно загружено ' + TILES.length + ' позиций';
+    document.getElementById('search').disabled = false;
+  }else{
+    st.className = 'st-err';
+    stt.textContent = 'Ошибка: не удалось загрузить данные из таблицы';
+  }
+}
+
+/* Регистрируем колбэки под каждый лист и запускаем загрузку */
+(function initLoad(){
+  pending = SHEETS.length;
+  SHEETS.forEach(function(sheetName, i){
+    var cbName = 'gviz_cb_' + i;
+    window[cbName] = (function(sn){
+      return function(json){
+        handleData(json, sn);
+        finishOne();
+      };
+    })(sheetName);
+    loadSheet(sheetName, cbName);
+  });
+  // страховка на таймаут
+  setTimeout(function(){ if(pending > 0){ pending = 0; allDone(); } }, 12000);
+})();
+
+/* ============================================================
+   Умный поиск + выпадающий список
+   ============================================================ */
+var searchEl = document.getElementById('search');
+var dropdownEl = document.getElementById('dropdown');
+var priceEl = document.getElementById('price');
+
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function renderDropdown(query){
+  var q = query.toLowerCase().trim();
+  var list = TILES;
+  if(q){
+    var qx = q.replace(/[хx*×]/g,'x');
+    list = TILES.filter(function(t){
+      return (t.article && t.article.toLowerCase().indexOf(q) !== -1) ||
+             (t.name && t.name.toLowerCase().indexOf(q) !== -1) ||
+             (t.sizeLabel && t.sizeLabel.toLowerCase().indexOf(q) !== -1) ||
+             (t.sizeKey && t.sizeKey.indexOf(qx) !== -1);
+    });
+  }
+  list = list.slice(0, 50);
+
+  if(list.length === 0){
+    dropdownEl.innerHTML = '<div class="opt-empty">Ничего не найдено</div>';
+    dropdownEl.classList.add('open');
+    return;
+  }
+
+  var html = '';
+  for(var i=0;i<list.length;i++){
+    var t = list[i];
+    html += '<div class="opt" data-i="' + TILES.indexOf(t) + '">' +
+              '<div class="t1">' +
+                (t.article ? '<span class="badge">' + esc(t.article) + '</span>' : '') +
+                esc(t.name) +
+              '</div>' +
+              '<div class="t2">Размер: ' + esc(t.sizeLabel || '—') +
+                ' · В упаковке: ' + t.pack + ' м²' +
+                (t.price != null ? ' · ' + fmt(t.price) + ' ₽' : '') +
+                (t.stock != null ? ' · Склад: ' + fmt(t.stock, t.stock%1?2:0) + ' м²' : '') +
+              '</div>' +
+            '</div>';
+  }
+  dropdownEl.innerHTML = html;
+  dropdownEl.classList.add('open');
+
+  // click (не mousedown) по позиции
+  var opts = dropdownEl.querySelectorAll('.opt');
+  for(var k=0;k<opts.length;k++){
+    opts[k].addEventListener('click', function(){
+      var i = parseInt(this.getAttribute('data-i'), 10);
+      selectTile(TILES[i]);
+    });
+  }
+}
+
+function selectTile(t){
+  if(!t) return;
+  selectedTile = t;
+  searchEl.value = (t.article ? t.article + ' — ' : '') + t.name +
+                   (t.sizeLabel ? ' (' + t.sizeLabel + ')' : '');
+  if(t.price != null){ priceEl.value = String(t.price).replace('.', ','); }
+  dropdownEl.classList.remove('open');
+  hideInlineErr();
+}
+
+searchEl.addEventListener('input', function(){
+  selectedTile = null; // при ручном изменении сбрасываем выбор
+  renderDropdown(searchEl.value);
+});
+searchEl.addEventListener('focus', function(){
+  if(TILES.length) renderDropdown(searchEl.value);
+});
+document.addEventListener('click', function(e){
+  if(!searchEl.contains(e.target) && !dropdownEl.contains(e.target)){
+    dropdownEl.classList.remove('open');
+  }
+});
+
+/* ============================================================
+   Расчёт
+   ============================================================ */
+function showInlineErr(msg){
+  var el = document.getElementById('inline-err');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+function hideInlineErr(){
+  var el = document.getElementById('inline-err');
+  if(el){ el.classList.remove('show'); }
+}
+
+window.calculate = function(){
+  hideInlineErr();
+
+  if(!selectedTile){
+    showInlineErr('Выберите плитку из списка.');
+    return;
+  }
+  var t = selectedTile;
+
+  var area = toNumber(document.getElementById('area').value);
+  if(!isFinite(area) || area <= 0){
+    showInlineErr('Укажите необходимую площадь (в м²).');
+    return;
+  }
+
+  // цена: из поля (можно вручную) или из плитки
+  var price = toNumber(priceEl.value);
+  if(!isFinite(price) || price < 0){
+    price = (t.price != null ? t.price : NaN);
+  }
+
+  var pack = t.pack;
+  var packs = Math.ceil(area / pack);   // упаковок (вверх)
+  var buyArea = packs * pack;            // площадь к покупке
+  var total = isFinite(price) ? buyArea * price : NaN;
+
+  document.getElementById('r-packs').textContent = fmt(packs) + ' уп.';
+  document.getElementById('r-area').textContent  = fmt(buyArea, 2) + ' м²';
+
+  // штуки и вес — только если есть параметры
+  var cPieces = document.getElementById('c-pieces');
+  var cWeight = document.getElementById('c-weight');
+  if(t.pieces != null){
+    cPieces.style.display = '';
+    document.getElementById('r-pieces').textContent = fmt(packs * t.pieces) + ' шт.';
+  }else{
+    cPieces.style.display = 'none';
+  }
+  if(t.weight != null){
+    cWeight.style.display = '';
+    document.getElementById('r-weight').textContent = fmt(packs * t.weight, 0) + ' кг';
+  }else{
+    cWeight.style.display = 'none';
+  }
+
+  document.getElementById('r-total').textContent =
+    isFinite(total) ? fmt(total, 0) + ' руб' : 'укажите цену';
+
+  var details = 'Размер: ' + (t.sizeLabel || '—') +
+                ' | В упаковке: ' + t.pack + ' м²' +
+                ' | Цена: ' + (isFinite(price) ? fmt(price) + ' руб' : '—') +
+                (t.stock != null ? ' | Склад Москва: ' + fmt(t.stock, t.stock%1?2:0) + ' м²' : '');
+  document.getElementById('r-details').textContent = details;
+
+  handleStockWarning(t, pack, packs);
+
+  document.getElementById('results').style.display = 'block';
+};
+
+function handleStockWarning(t, pack, packsNeeded){
+  var warn = document.getElementById('warn');
+  if(!warn){ return; } // защита: блока может не быть в DOM
+  var warnText = document.getElementById('warn-text');
+
+  if(t.stock == null || !isFinite(t.stock)){
+    warn.classList.remove('show');
+    return;
+  }
+  var packsAvail = Math.floor(t.stock / pack); // остаток в целых упаковках
+  if(packsAvail < packsNeeded){
+    var shortPacks = packsNeeded - packsAvail;
+    var shortArea = shortPacks * pack;
+    if(warnText){
+      warnText.textContent = 'Внимание! На складе не хватает ' +
+        fmt(shortPacks) + ' упак (' + fmt(shortArea, 2) + ' кв.м)';
+    }
+    warn.classList.add('show');
+  }else{
+    warn.classList.remove('show');
+  }
+}
+</script>
+</body>
+</html>
