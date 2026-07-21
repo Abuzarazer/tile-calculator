@@ -66,6 +66,8 @@
   .st-ok .dot{background:var(--ok)}
   .st-err{background:var(--err-bg);color:var(--err)}
   .st-err .dot{background:var(--err)}
+  #retryBtn{display:none;margin-top:9px;width:auto;padding:9px 13px;font-size:13px}
+  #refreshBtn{margin-top:9px;width:auto;padding:9px 13px;font-size:13px}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
 
   .card{
@@ -76,6 +78,7 @@
   .field:last-child{margin-bottom:0}
   label{display:block;font-size:13px;font-weight:700;color:#334155;margin-bottom:7px}
   label .hint{font-weight:500;color:var(--muted)}
+  .field-hint{margin-top:6px;color:var(--muted);font-size:12px;line-height:1.4}
   input[type=text]{
     width:100%;padding:13px 14px;font-size:16px;border:1.5px solid var(--line);
     border-radius:12px;outline:none;transition:.15s;background:#f8fafc;color:var(--ink);
@@ -101,6 +104,11 @@
     background:#eff6ff;border-radius:6px;padding:1px 7px;margin-right:6px;
   }
   .opt-empty{padding:14px;text-align:center;color:var(--muted);font-size:14px}
+  .stock{font-weight:800}
+  .stock-ok{color:var(--ok)}
+  .stock-low{color:#c2410c}
+  .stock-none{color:var(--err)}
+  .stock-unknown{color:var(--muted)}
 
   .row{display:flex;gap:14px}
   .row .field{flex:1}
@@ -122,6 +130,10 @@
     background-image:none;
   }
   .btn-2nd:hover{transform:none;box-shadow:none;background:#e2e8f0}
+  .reserve-options{display:flex;gap:8px;margin-bottom:9px}
+  .reserve-option{width:auto;margin:0;padding:8px 12px;font-size:13px;background:#f1f5f9;color:var(--brand-dark);box-shadow:none;background-image:none}
+  .reserve-option:hover{transform:none;box-shadow:none;background:#e2e8f0}
+  .reserve-option.active{background:var(--brand);color:#fff}
   #copy-msg{
     margin-top:8px;font-size:12.5px;color:var(--ok);font-weight:600;min-height:16px;
   }
@@ -171,6 +183,8 @@
   </header>
 
   <div id="status" class="st-load"><span class="dot"></span><span id="status-text">Загрузка данных…</span></div>
+  <button class="btn btn-2nd" id="refreshBtn" type="button" disabled>Обновить остатки</button>
+  <button class="btn btn-2nd" id="retryBtn" type="button">Повторить загрузку</button>
 
   <div class="card">
     <div class="field">
@@ -183,6 +197,7 @@
       <div class="field">
         <label>Необходимая площадь, м²</label>
         <input type="text" id="area" placeholder="например 24,5" inputmode="decimal" autocomplete="off">
+        <div class="field-hint">Площадь поверхности, которую нужно облицевать, без учёта запаса.</div>
       </div>
       <div class="field">
         <label>Цена за м², руб</label>
@@ -191,8 +206,13 @@
     </div>
 
     <div class="field">
-      <label>Запас, % <span class="hint">— чтобы хватило с учётом подрезки</span></label>
-      <input type="text" id="reserve" placeholder="например 10" inputmode="decimal" autocomplete="off">
+      <label>Запас, % <span class="hint">— на подрезку и возможный брак</span></label>
+      <div class="reserve-options" aria-label="Быстрый выбор запаса">
+        <button class="btn reserve-option" type="button" data-reserve="5" aria-pressed="false">5%</button>
+        <button class="btn reserve-option" type="button" data-reserve="10" aria-pressed="false">10%</button>
+        <button class="btn reserve-option" type="button" data-reserve="15" aria-pressed="false">15%</button>
+      </div>
+      <input type="text" id="reserve" placeholder="Другой процент" inputmode="decimal" autocomplete="off">
     </div>
 
     <button class="btn" id="calcBtn" onclick="window.calculate()">Рассчитать</button>
@@ -209,6 +229,7 @@
         <div class="res-cell total"><div class="k">Итого</div><div class="v" id="r-total">—</div></div>
       </div>
       <div class="details" id="r-details">—</div>
+      <div class="field-hint">Количество округляется вверх до целой упаковки: купить часть упаковки нельзя.</div>
       <div id="warn"><span class="wi">⚠️</span><span id="warn-text"></span></div>
       <div class="row" style="margin-top:14px">
         <button class="btn btn-2nd" id="copyResultBtn" onclick="window.copyResult()">Скопировать результат</button>
@@ -295,14 +316,15 @@ function findCols(headers){
 }
 
 var pending = 0;
+var loadAttempt = 0;
 
-function loadSheet(sheetName, cbName){
+function loadSheet(sheetName, cbName, attempt){
   var url = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID +
             '/gviz/tq?tqx=out:json;responseHandler:' + cbName +
             '&sheet=' + encodeURIComponent(sheetName);
   var s = document.createElement('script');
   s.src = url;
-  s.onerror = function(){ finishOne(); };
+  s.onerror = function(){ if(attempt === loadAttempt) finishOne(); };
   document.head.appendChild(s);
 }
 
@@ -374,6 +396,7 @@ function handleData(json, sheetName){
 }
 
 function finishOne(){
+  if(pending <= 0) return;
   pending--;
   if(pending <= 0) allDone();
 }
@@ -381,14 +404,20 @@ function finishOne(){
 function allDone(){
   var st = document.getElementById('status');
   var stt = document.getElementById('status-text');
+  var retry = document.getElementById('retryBtn');
+  var refresh = document.getElementById('refreshBtn');
   if(TILES.length > 0){
     st.className = 'st-ok';
     stt.textContent = 'Успешно загружено ' + TILES.length + ' позиций';
+    retry.style.display = 'none';
+    refresh.disabled = false;
     document.getElementById('search').disabled = false;
     restoreState();
   }else{
     st.className = 'st-err';
     stt.textContent = 'Ошибка: не удалось загрузить данные из таблицы';
+    retry.style.display = 'inline-block';
+    refresh.disabled = false;
   }
 }
 
@@ -425,7 +454,7 @@ function restoreState(){
   if(t) selectTile(t);
   if(state.area) document.getElementById('area').value = state.area;
   if(state.price) priceEl.value = state.price;
-  if(state.reserve) document.getElementById('reserve').value = state.reserve;
+  if(state.reserve) setReserve(state.reserve);
   if(t && state.area) window.calculate();
 }
 
@@ -442,24 +471,61 @@ function saveState(t, area, price, reserve){
 }
 var lastState = null;
 
-(function initLoad(){
+function startLoading(){
+  var attempt = ++loadAttempt;
+  TILES = [];
+  SEEN = {};
+  selectedTile = null;
   pending = SHEETS.length;
+  document.getElementById('search').disabled = true;
+  document.getElementById('status').className = 'st-load';
+  document.getElementById('status-text').textContent = 'Загрузка данных…';
+  document.getElementById('retryBtn').style.display = 'none';
+  document.getElementById('refreshBtn').disabled = true;
   SHEETS.forEach(function(sheetName, i){
     var cbName = 'gviz_cb_' + i;
     window[cbName] = (function(sn){
       return function(json){
+        if(attempt !== loadAttempt) return;
         handleData(json, sn);
         finishOne();
       };
     })(sheetName);
-    loadSheet(sheetName, cbName);
+    loadSheet(sheetName, cbName, attempt);
   });
-  setTimeout(function(){ if(pending > 0){ pending = 0; allDone(); } }, 12000);
-})();
+  setTimeout(function(){
+    if(attempt === loadAttempt && pending > 0){ pending = 0; allDone(); }
+  }, 12000);
+}
+
+document.getElementById('retryBtn').addEventListener('click', startLoading);
+document.getElementById('refreshBtn').addEventListener('click', startLoading);
+startLoading();
 
 var searchEl = document.getElementById('search');
 var dropdownEl = document.getElementById('dropdown');
 var priceEl = document.getElementById('price');
+var reserveEl = document.getElementById('reserve');
+var reserveButtons = document.querySelectorAll('[data-reserve]');
+
+function setReserve(value){
+  reserveEl.value = value;
+  for(var i=0;i<reserveButtons.length;i++){
+    var active = reserveButtons[i].getAttribute('data-reserve') === String(value);
+    reserveButtons[i].classList.toggle('active', active);
+    reserveButtons[i].setAttribute('aria-pressed', active ? 'true' : 'false');
+  }
+}
+
+for(var rb=0;rb<reserveButtons.length;rb++){
+  reserveButtons[rb].addEventListener('click', function(){ setReserve(this.getAttribute('data-reserve')); });
+}
+reserveEl.addEventListener('input', function(){
+  for(var i=0;i<reserveButtons.length;i++){
+    reserveButtons[i].classList.remove('active');
+    reserveButtons[i].setAttribute('aria-pressed', 'false');
+  }
+});
 
 function esc(s){
   return String(s == null ? '' : s)
@@ -489,6 +555,7 @@ function renderDropdown(query){
   var html = '';
   for(var i=0;i<list.length;i++){
     var t = list[i];
+    var availability = stockStatus(t);
     html += '<div class="opt" data-i="' + TILES.indexOf(t) + '">' +
               '<div class="t1">' +
                 (t.article ? '<span class="badge">' + esc(t.article) + '</span>' : '') +
@@ -497,7 +564,8 @@ function renderDropdown(query){
               '<div class="t2">Размер: ' + esc(t.sizeLabel || '—') +
                 ' · В упаковке: ' + t.pack + ' м²' +
                 (t.price != null ? ' · ' + fmt(t.price) + ' ₽' : '') +
-                (t.stock != null ? ' · Склад: ' + fmt(t.stock, t.stock%1?2:0) + ' м²' : '') +
+                ' · <span class="stock ' + availability.className + '">' + availability.text + '</span>' +
+                (t.stock != null ? ' (' + fmt(t.stock, t.stock%1?2:0) + ' м²)' : '') +
               '</div>' +
             '</div>';
   }
@@ -511,6 +579,14 @@ function renderDropdown(query){
       selectTile(TILES[i]);
     });
   }
+}
+
+function stockStatus(t){
+  if(t.stock == null || !isFinite(t.stock)) return { text: 'Наличие уточняйте', className: 'stock-unknown' };
+  var packs = Math.floor(t.stock / t.pack);
+  if(packs <= 0) return { text: 'Нет в наличии', className: 'stock-none' };
+  if(packs <= 5) return { text: 'Мало', className: 'stock-low' };
+  return { text: 'В наличии', className: 'stock-ok' };
 }
 
 function selectTile(t){
@@ -611,11 +687,26 @@ window.calculate = function(){
 };
 
 window.copyResult = function(){
-  if(!lastState) return;
-  var text = document.getElementById('r-details').textContent +
-    ' | Упаковок: ' + document.getElementById('r-packs').textContent +
-    ' | Площадь к покупке: ' + document.getElementById('r-area').textContent +
-    ' | Итого: ' + document.getElementById('r-total').textContent;
+  if(!lastState || !selectedTile) return;
+  var t = selectedTile;
+  var text = [
+    'Расчёт плитки',
+    'Артикул: ' + (t.article || '—'),
+    'Наименование: ' + (t.name || '—'),
+    'Размер: ' + (t.sizeLabel || '—'),
+    'Площадь в упаковке: ' + t.pack + ' м²',
+    'Штук в упаковке: ' + (t.pieces != null ? t.pieces : '—'),
+    'Вес упаковки: ' + (t.weight != null ? t.weight + ' кг' : '—'),
+    'Остаток на складе: ' + (t.stock != null ? fmt(t.stock, t.stock % 1 ? 2 : 0) + ' м²' : 'уточняйте'),
+    'Необходимая площадь: ' + document.getElementById('area').value + ' м²',
+    'Запас: ' + (reserveEl.value || '0') + '%',
+    'Цена за м²: ' + (priceEl.value || 'не указана') + ' руб',
+    'Упаковок: ' + document.getElementById('r-packs').textContent,
+    'Площадь к покупке: ' + document.getElementById('r-area').textContent,
+    'Штук всего: ' + document.getElementById('r-pieces').textContent,
+    'Вес всего: ' + document.getElementById('r-weight').textContent,
+    'Итого: ' + document.getElementById('r-total').textContent
+  ].join('\n');
   copyToClipboard(text);
 };
 
