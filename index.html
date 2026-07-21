@@ -116,6 +116,15 @@
   }
   .btn:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(37,99,235,.45)}
   .btn:active{transform:translateY(0)}
+  .btn-2nd{
+    flex:1;width:auto;font-size:13px;padding:11px;
+    background:#f1f5f9;color:var(--brand-dark);box-shadow:none;
+    background-image:none;
+  }
+  .btn-2nd:hover{transform:none;box-shadow:none;background:#e2e8f0}
+  #copy-msg{
+    margin-top:8px;font-size:12.5px;color:var(--ok);font-weight:600;min-height:16px;
+  }
 
   #results{display:none;margin-top:16px}
   .res-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
@@ -201,6 +210,11 @@
       </div>
       <div class="details" id="r-details">—</div>
       <div id="warn"><span class="wi">⚠️</span><span id="warn-text"></span></div>
+      <div class="row" style="margin-top:14px">
+        <button class="btn btn-2nd" id="copyResultBtn" onclick="window.copyResult()">Скопировать результат</button>
+        <button class="btn btn-2nd" id="copyLinkBtn" onclick="window.copyShareLink()">Скопировать ссылку</button>
+      </div>
+      <div id="copy-msg"></div>
     </div>
   </div>
 </div>
@@ -371,11 +385,62 @@ function allDone(){
     st.className = 'st-ok';
     stt.textContent = 'Успешно загружено ' + TILES.length + ' позиций';
     document.getElementById('search').disabled = false;
+    restoreState();
   }else{
     st.className = 'st-err';
     stt.textContent = 'Ошибка: не удалось загрузить данные из таблицы';
   }
 }
+
+/* ---------- Восстановление состояния: из ссылки или из localStorage ---------- */
+var STORAGE_KEY = 'tileCalcState';
+
+function findTileByKey(article, sizeKey){
+  for(var i=0;i<TILES.length;i++){
+    if(TILES[i].article === article && TILES[i].sizeKey === sizeKey) return TILES[i];
+  }
+  return null;
+}
+
+function restoreState(){
+  var params = new URLSearchParams(window.location.search);
+  var state = null;
+  if(params.has('article')){
+    state = {
+      article: params.get('article') || '',
+      size: params.get('size') || '',
+      area: params.get('area') || '',
+      price: params.get('price') || '',
+      reserve: params.get('reserve') || ''
+    };
+  }else{
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(raw) state = JSON.parse(raw);
+    }catch(e){}
+  }
+  if(!state) return;
+
+  var t = findTileByKey(state.article, state.size);
+  if(t) selectTile(t);
+  if(state.area) document.getElementById('area').value = state.area;
+  if(state.price) priceEl.value = state.price;
+  if(state.reserve) document.getElementById('reserve').value = state.reserve;
+  if(t && state.area) window.calculate();
+}
+
+function saveState(t, area, price, reserve){
+  var state = {
+    article: t.article,
+    size: t.sizeKey,
+    area: String(area),
+    price: String(price),
+    reserve: String(reserve)
+  };
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+  lastState = state;
+}
+var lastState = null;
 
 (function initLoad(){
   pending = SHEETS.length;
@@ -541,7 +606,44 @@ window.calculate = function(){
   handleStockWarning(t, pack, packs);
 
   document.getElementById('results').style.display = 'block';
+  document.getElementById('copy-msg').textContent = '';
+  saveState(t, area, priceEl.value, reserve);
 };
+
+window.copyResult = function(){
+  if(!lastState) return;
+  var text = document.getElementById('r-details').textContent +
+    ' | Упаковок: ' + document.getElementById('r-packs').textContent +
+    ' | Площадь к покупке: ' + document.getElementById('r-area').textContent +
+    ' | Итого: ' + document.getElementById('r-total').textContent;
+  copyToClipboard(text);
+};
+
+window.copyShareLink = function(){
+  if(!lastState) return;
+  var params = new URLSearchParams(lastState);
+  var url = window.location.origin + window.location.pathname + '?' + params.toString();
+  copyToClipboard(url);
+};
+
+function copyToClipboard(text){
+  var msg = document.getElementById('copy-msg');
+  function ok(){ msg.textContent = 'Скопировано ✓'; }
+  function fail(){ msg.textContent = 'Не удалось скопировать'; }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(ok, fail);
+  }else{
+    try{
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      ok();
+    }catch(e){ fail(); }
+  }
+}
 
 function handleStockWarning(t, pack, packsNeeded){
   var warn = document.getElementById('warn');
