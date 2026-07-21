@@ -629,19 +629,28 @@ window.copyShareLink = function(){
 function copyToClipboard(text){
   var msg = document.getElementById('copy-msg');
   function ok(){ msg.textContent = 'Скопировано ✓'; }
-  function fail(){ msg.textContent = 'Не удалось скопировать'; }
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(text).then(ok, fail);
-  }else{
+  function execFallback(){
     try{
       var ta = document.createElement('textarea');
       ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
       document.body.appendChild(ta);
+      ta.focus();
       ta.select();
-      document.execCommand('copy');
+      ta.setSelectionRange(0, text.length);
+      var success = document.execCommand('copy');
       document.body.removeChild(ta);
-      ok();
-    }catch(e){ fail(); }
+      if(success){ ok(); }else{ promptFallback(); }
+    }catch(e){ promptFallback(); }
+  }
+  function promptFallback(){
+    window.prompt('Скопируйте вручную (Ctrl/Cmd+C):', text);
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(ok, execFallback);
+  }else{
+    execFallback();
   }
 }
 
