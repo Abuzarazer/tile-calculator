@@ -31,7 +31,7 @@
   body{
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     color:var(--ink);
-    background-color:#0f172a; /* фолбэк для старых Safari без поддержки градиента */
+    background-color:#0f172a;
     background:-webkit-linear-gradient(300deg,#0f172a 0%,#1e293b 45%,#334155 100%);
     background:linear-gradient(160deg,#0f172a 0%,#1e293b 45%,#334155 100%);
     min-height:100vh;
@@ -55,7 +55,6 @@
   }
   header p{color:#94a3b8;font-size:13px;margin-top:6px}
 
-  /* status */
   #status{
     margin:14px 0 0;padding:11px 14px;border-radius:12px;font-size:14px;font-weight:600;
     display:flex;align-items:center;gap:9px;transition:.2s;
@@ -80,17 +79,16 @@
   input[type=text]{
     width:100%;padding:13px 14px;font-size:16px;border:1.5px solid var(--line);
     border-radius:12px;outline:none;transition:.15s;background:#f8fafc;color:var(--ink);
-    -webkit-appearance:none;appearance:none;-webkit-border-radius:12px; /* убираем native-вид iOS Safari */
+    -webkit-appearance:none;appearance:none;-webkit-border-radius:12px;
   }
   input[type=text]:focus{border-color:var(--brand);background:#fff;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
   input:disabled{opacity:.6;cursor:not-allowed}
 
-  /* dropdown */
   .dropdown{
     position:absolute;left:0;right:0;top:100%;margin-top:6px;z-index:40;
     background:#fff;border:1px solid var(--line);border-radius:12px;
     box-shadow:0 14px 34px rgba(2,6,23,.18);max-height:320px;overflow-y:auto;display:none;
-    -webkit-overflow-scrolling:touch; /* плавный инерционный скролл в iOS Safari */
+    -webkit-overflow-scrolling:touch;
   }
   .dropdown.open{display:block}
   .opt{padding:11px 14px;cursor:pointer;border-bottom:1px solid #f1f5f9;transition:.1s}
@@ -111,7 +109,7 @@
     width:100%;padding:15px;font-size:16px;font-weight:800;color:#fff;border:none;
     border-radius:12px;cursor:pointer;margin-top:4px;
     -webkit-appearance:none;appearance:none;
-    background:var(--brand-dark); /* solid-фолбэк для старых Safari */
+    background:var(--brand-dark);
     background:-webkit-linear-gradient(315deg,var(--brand),var(--brand-dark));
     background:linear-gradient(135deg,var(--brand),var(--brand-dark));
     box-shadow:0 8px 20px rgba(37,99,235,.35);transition:.15s;
@@ -119,7 +117,6 @@
   .btn:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(37,99,235,.45)}
   .btn:active{transform:translateY(0)}
 
-  /* results */
   #results{display:none;margin-top:16px}
   .res-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
   .res-cell{
@@ -184,6 +181,11 @@
       </div>
     </div>
 
+    <div class="field">
+      <label>Запас, % <span class="hint">— чтобы хватило с учётом подрезки</span></label>
+      <input type="text" id="reserve" placeholder="например 10" inputmode="decimal" autocomplete="off">
+    </div>
+
     <button class="btn" id="calcBtn" onclick="window.calculate()">Рассчитать</button>
     <div id="inline-err"></div>
   </div>
@@ -204,31 +206,23 @@
 </div>
 
 <script>
-/* ============================================================
-   Онлайн-калькулятор плитки — единый файл
-   Источник: Google Sheets через JSONP (Google Visualization API)
-   ============================================================ */
-
 var SHEET_ID = '1dqYgo6PI2ttiQgbF8QhLzOI19VSFSEdthK_xDX5Mk04';
 var SHEETS = ['60*60', '60*120', '60x60', '60x120', '60х60', '60х120'];
 
-var TILES = [];          // итоговая база плитки
-var SEEN = {};           // защита от дублей (Артикул+Размер)
-var selectedTile = null; // скрыто сохранённый выбранный объект
+var TILES = [];
+var SEEN = {};
+var selectedTile = null;
 
-/* ---------- Жёсткие параметры по размеру ---------- */
 var HARD = {
   '60x60':  { pack: 1.8,  pieces: 5, weight: 34 },
   '60x120': { pack: 1.44, pieces: 2, weight: 27 }
 };
 
-/* Нормализация размера: любые написания -> '60x60' / '60x120' / '' */
 function normSize(raw){
   if(raw == null) return '';
   var s = String(raw).toLowerCase();
-  s = s.replace(/[хx*×]/g, 'x');       // русская х, латинская x, звёздочка, ×
-  s = s.replace(/[^0-9x]/g, '');        // оставляем только цифры и x
-  // миллиметры -> сантиметры
+  s = s.replace(/[хx*×]/g, 'x');
+  s = s.replace(/[^0-9x]/g, '');
   s = s.replace(/600x600/, '60x60')
        .replace(/600x1200/, '60x120')
        .replace(/1200x600/, '60x120');
@@ -237,26 +231,23 @@ function normSize(raw){
   return '';
 }
 
-/* Красивое отображение размера */
 function prettySize(key){
   if(key === '60x60') return '60х60';
   if(key === '60x120') return '60х120';
   return '';
 }
 
-/* ---------- Жёсткая очистка чисел ---------- */
 function toNumber(v){
   if(v == null) return NaN;
   if(typeof v === 'number') return v;
   var s = String(v).trim();
   if(s === '') return NaN;
-  s = s.replace(/\s/g, '').replace(/ /g, '').replace(',', '.'); // убрать пробелы, запятая -> точка
-  s = s.replace(/[^0-9.\-]/g, '');                                   // только цифры, точка, минус
+  s = s.replace(/\s/g, '').replace(/ /g, '').replace(',', '.');
+  s = s.replace(/[^0-9.\-]/g, '');
   var n = parseFloat(s);
   return isNaN(n) ? NaN : n;
 }
 
-/* Форматирование числа с пробелами-разделителями тысяч */
 function fmt(n, dec){
   if(dec == null) dec = 0;
   var x = Number(n);
@@ -266,7 +257,6 @@ function fmt(n, dec){
   return parts.join('.');
 }
 
-/* ---------- Умный поиск индексов колонок ---------- */
 function findCols(headers){
   var h = headers.map(function(x){ return String(x == null ? '' : x).toLowerCase().trim(); });
   function find(keys){
@@ -286,13 +276,10 @@ function findCols(headers){
     stock:   find(['москва'])
   };
   if(idx.stock === -1) idx.stock = find(['склад','остаток','остатки']);
-  // Запасной вариант: в этих таблицах артикул — первый столбец,
-  // а его заголовок может содержать пример артикула вместо слова «артикул».
   if(idx.article === -1) idx.article = 0;
   return idx;
 }
 
-/* ---------- JSONP-загрузка одного листа ---------- */
 var pending = 0;
 
 function loadSheet(sheetName, cbName){
@@ -311,7 +298,6 @@ function handleData(json, sheetName){
     var cols = json.table.cols;
     var rows = json.table.rows || [];
 
-    // Заголовки: сначала метки колонок; если пусто — первая строка данных.
     var headers = cols.map(function(c){ return c && c.label ? c.label : ''; });
     var hasLabels = headers.some(function(x){ return String(x).trim() !== ''; });
 
@@ -324,7 +310,7 @@ function handleData(json, sheetName){
     }
 
     var idx = findCols(headers);
-    if(idx.article === -1 && idx.name === -1 && idx.size === -1) return; // не тот лист
+    if(idx.article === -1 && idx.name === -1 && idx.size === -1) return;
 
     for(var r=0; r<dataRows.length; r++){
       var c = dataRows[r].c || [];
@@ -340,22 +326,20 @@ function handleData(json, sheetName){
       var stockN  = toNumber(cell(idx.stock));
       var packN   = toNumber(cell(idx.pack));
 
-      if(!article && !name && !sizeRaw) continue; // пустая строка
+      if(!article && !name && !sizeRaw) continue;
 
       var packRaw = String(cell(idx.pack)).trim();
       var sizeKey = normSize(sizeRaw) || normSize(name) || normSize(packRaw) || normSize(sheetName);
-      if(!sizeKey) continue; // калькулятор работает только с 60x60 и 60x120
+      if(!sizeKey) continue;
 
-      // Жёсткие параметры перекрывают то, что в таблице
       var pack = packN, pieces = null, weight = null;
       if(sizeKey && HARD[sizeKey]){
         pack   = HARD[sizeKey].pack;
         pieces = HARD[sizeKey].pieces;
         weight = HARD[sizeKey].weight;
       }
-      if(!isFinite(pack) || pack <= 0) continue; // без площади упаковки расчёт невозможен
+      if(!isFinite(pack) || pack <= 0) continue;
 
-      // Защита от дублей: Артикул + Размер
       var dedupKey = (article || name).toLowerCase() + '|' + (sizeKey || sizeRaw.toLowerCase());
       if(SEEN[dedupKey]) continue;
       SEEN[dedupKey] = true;
@@ -372,7 +356,7 @@ function handleData(json, sheetName){
         stock: isFinite(stockN) ? stockN : null
       });
     }
-  }catch(e){ /* игнорируем ошибочный лист */ }
+  }catch(e){ }
 }
 
 function finishOne(){
@@ -393,7 +377,6 @@ function allDone(){
   }
 }
 
-/* Регистрируем колбэки под каждый лист и запускаем загрузку */
 (function initLoad(){
   pending = SHEETS.length;
   SHEETS.forEach(function(sheetName, i){
@@ -406,13 +389,9 @@ function allDone(){
     })(sheetName);
     loadSheet(sheetName, cbName);
   });
-  // страховка на таймаут
   setTimeout(function(){ if(pending > 0){ pending = 0; allDone(); } }, 12000);
 })();
 
-/* ============================================================
-   Умный поиск + выпадающий список
-   ============================================================ */
 var searchEl = document.getElementById('search');
 var dropdownEl = document.getElementById('dropdown');
 var priceEl = document.getElementById('price');
@@ -460,7 +439,6 @@ function renderDropdown(query){
   dropdownEl.innerHTML = html;
   dropdownEl.classList.add('open');
 
-  // click (не mousedown) по позиции
   var opts = dropdownEl.querySelectorAll('.opt');
   for(var k=0;k<opts.length;k++){
     opts[k].addEventListener('click', function(){
@@ -481,7 +459,7 @@ function selectTile(t){
 }
 
 searchEl.addEventListener('input', function(){
-  selectedTile = null; // при ручном изменении сбрасываем выбор
+  selectedTile = null;
   renderDropdown(searchEl.value);
 });
 searchEl.addEventListener('focus', function(){
@@ -493,9 +471,6 @@ document.addEventListener('click', function(e){
   }
 });
 
-/* ============================================================
-   Расчёт
-   ============================================================ */
 function showInlineErr(msg){
   var el = document.getElementById('inline-err');
   el.textContent = msg;
@@ -521,21 +496,23 @@ window.calculate = function(){
     return;
   }
 
-  // цена: из поля (можно вручную) или из плитки
   var price = toNumber(priceEl.value);
   if(!isFinite(price) || price < 0){
     price = (t.price != null ? t.price : NaN);
   }
 
+  var reserve = toNumber(document.getElementById('reserve').value);
+  if(!isFinite(reserve) || reserve < 0) reserve = 0;
+  var areaWithReserve = area * (1 + reserve / 100);
+
   var pack = t.pack;
-  var packs = Math.ceil(area / pack);   // упаковок (вверх)
-  var buyArea = packs * pack;            // площадь к покупке
+  var packs = Math.ceil(areaWithReserve / pack);
+  var buyArea = packs * pack;
   var total = isFinite(price) ? buyArea * price : NaN;
 
   document.getElementById('r-packs').textContent = fmt(packs) + ' уп.';
   document.getElementById('r-area').textContent  = fmt(buyArea, 2) + ' м²';
 
-  // штуки и вес — только если есть параметры
   var cPieces = document.getElementById('c-pieces');
   var cWeight = document.getElementById('c-weight');
   if(t.pieces != null){
@@ -556,6 +533,7 @@ window.calculate = function(){
 
   var details = 'Размер: ' + (t.sizeLabel || '—') +
                 ' | В упаковке: ' + t.pack + ' м²' +
+                (reserve > 0 ? ' | Запас: ' + fmt(reserve) + '% (' + fmt(areaWithReserve, 2) + ' м²)' : '') +
                 ' | Цена: ' + (isFinite(price) ? fmt(price) + ' руб' : '—') +
                 (t.stock != null ? ' | Склад Москва: ' + fmt(t.stock, t.stock%1?2:0) + ' м²' : '');
   document.getElementById('r-details').textContent = details;
@@ -567,14 +545,14 @@ window.calculate = function(){
 
 function handleStockWarning(t, pack, packsNeeded){
   var warn = document.getElementById('warn');
-  if(!warn){ return; } // защита: блока может не быть в DOM
+  if(!warn){ return; }
   var warnText = document.getElementById('warn-text');
 
   if(t.stock == null || !isFinite(t.stock)){
     warn.classList.remove('show');
     return;
   }
-  var packsAvail = Math.floor(t.stock / pack); // остаток в целых упаковках
+  var packsAvail = Math.floor(t.stock / pack);
   if(packsAvail < packsNeeded){
     var shortPacks = packsNeeded - packsAvail;
     var shortArea = shortPacks * pack;
