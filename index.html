@@ -647,7 +647,7 @@ window.calculate = function(){
   var areaWithReserve = area * (1 + reserve / 100);
 
   var pack = t.pack;
-  var packs = Math.ceil(areaWithReserve / pack);
+  var packs = Math.ceil(areaWithReserve / pack - 1e-9);
   var buyArea = packs * pack;
   var total = isFinite(price) ? buyArea * price : NaN;
 
