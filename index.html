@@ -79,12 +79,13 @@
   label{display:block;font-size:13px;font-weight:700;color:#334155;margin-bottom:7px}
   label .hint{font-weight:500;color:var(--muted)}
   .field-hint{margin-top:6px;color:var(--muted);font-size:12px;line-height:1.4}
-  input[type=text]{
+  input[type=text],select{
     width:100%;padding:13px 14px;font-size:16px;border:1.5px solid var(--line);
     border-radius:12px;outline:none;transition:.15s;background:#f8fafc;color:var(--ink);
     -webkit-appearance:none;appearance:none;-webkit-border-radius:12px;
   }
-  input[type=text]:focus{border-color:var(--brand);background:#fff;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+  select{background-image:linear-gradient(45deg,transparent 50%,#64748b 50%),linear-gradient(135deg,#64748b 50%,transparent 50%);background-position:calc(100% - 18px) 19px,calc(100% - 13px) 19px;background-size:5px 5px;background-repeat:no-repeat}
+  input[type=text]:focus,select:focus{border-color:var(--brand);background-color:#fff;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
   input:disabled{opacity:.6;cursor:not-allowed}
 
   .dropdown{
@@ -130,6 +131,7 @@
     background-image:none;
   }
   .btn-2nd:hover{transform:none;box-shadow:none;background:#e2e8f0}
+  .btn-clear{width:100%;margin-top:10px}
   .reserve-options{display:flex;gap:8px;margin-bottom:9px}
   .reserve-option{width:auto;margin:0;padding:8px 12px;font-size:13px;background:#f1f5f9;color:var(--brand-dark);box-shadow:none;background-image:none}
   .reserve-option:hover{transform:none;box-shadow:none;background:#e2e8f0}
@@ -188,6 +190,14 @@
 
   <div class="card">
     <div class="field">
+      <label for="warehouse">Склад</label>
+      <select id="warehouse">
+        <option value="moscow">Москва</option>
+        <option value="tver">Тверь</option>
+      </select>
+    </div>
+
+    <div class="field">
       <label>Плитка <span class="hint">— поиск по артикулу, названию или размеру</span></label>
       <input type="text" id="search" placeholder="Начните вводить…" autocomplete="off" disabled>
       <div class="dropdown" id="dropdown"></div>
@@ -216,6 +226,7 @@
     </div>
 
     <button class="btn" id="calcBtn" onclick="window.calculate()">Рассчитать</button>
+    <button class="btn btn-2nd btn-clear" id="clearBtn" type="button" onclick="window.clearCalculator()">Очистить</button>
     <div id="inline-err"></div>
   </div>
 
@@ -247,6 +258,7 @@ var SHEETS = ['60*60', '60*120', '60x60', '60x120', '60х60', '60х120'];
 var TILES = [];
 var SEEN = {};
 var selectedTile = null;
+var ACTIVE_WAREHOUSE = 'moscow';
 
 var HARD = {
   '60x60':  { pack: 1.8,  pieces: 5, weight: 34 },
@@ -302,15 +314,29 @@ function findCols(headers){
     }
     return -1;
   }
+  function findAll(keys){
+    for(var i=0;i<h.length;i++){
+      var matches = true;
+      for(var k=0;k<keys.length;k++){
+        if(h[i].indexOf(keys[k]) === -1){ matches = false; break; }
+      }
+      if(matches) return i;
+    }
+    return -1;
+  }
   var idx = {
     article: find(['артикул','артик']),
     name:    find(['назв','наимен']),
     size:    find(['формат','размер','разм']),
     pack:    find(['пакинг','упаковк','кв.м','кв. м','м2','packing']),
     price:   find(['цена','стоимост','прайс']),
-    stock:   find(['москва'])
+    stockMoscow: findAll(['склад','москва']),
+    stockTver: findAll(['склад','твер']),
+    reserveMoscow: findAll(['резерв','москва']),
+    reserveTver: findAll(['резерв','твер'])
   };
-  if(idx.stock === -1) idx.stock = find(['склад','остаток','остатки']);
+  if(idx.stockMoscow === -1) idx.stockMoscow = find(['москва']);
+  if(idx.stockMoscow === -1) idx.stockMoscow = find(['склад','остаток','остатки']);
   if(idx.article === -1) idx.article = 0;
   return idx;
 }
@@ -359,7 +385,10 @@ function handleData(json, sheetName){
       var name    = String(cell(idx.name)).trim();
       var sizeRaw = String(cell(idx.size)).trim();
       var priceN  = toNumber(cell(idx.price));
-      var stockN  = toNumber(cell(idx.stock));
+      var stockMoscowN = toNumber(cell(idx.stockMoscow));
+      var stockTverN = toNumber(cell(idx.stockTver));
+      var reserveMoscowN = toNumber(cell(idx.reserveMoscow));
+      var reserveTverN = toNumber(cell(idx.reserveTver));
       var packN   = toNumber(cell(idx.pack));
 
       if(!article && !name && !sizeRaw) continue;
@@ -389,7 +418,10 @@ function handleData(json, sheetName){
         pieces: pieces,
         weight: weight,
         price: isFinite(priceN) ? priceN : null,
-        stock: isFinite(stockN) ? stockN : null
+        stockMoscow: isFinite(stockMoscowN) ? stockMoscowN : null,
+        stockTver: isFinite(stockTverN) ? stockTverN : null,
+        reserveMoscow: isFinite(reserveMoscowN) ? reserveMoscowN : 0,
+        reserveTver: isFinite(reserveTverN) ? reserveTverN : 0
       });
     }
   }catch(e){ }
@@ -440,7 +472,8 @@ function restoreState(){
       size: params.get('size') || '',
       area: params.get('area') || '',
       price: params.get('price') || '',
-      reserve: params.get('reserve') || ''
+      reserve: params.get('reserve') || '',
+      warehouse: params.get('warehouse') || 'moscow'
     };
   }else{
     try{
@@ -450,6 +483,8 @@ function restoreState(){
   }
   if(!state) return;
 
+  ACTIVE_WAREHOUSE = state.warehouse === 'tver' ? 'tver' : 'moscow';
+  document.getElementById('warehouse').value = ACTIVE_WAREHOUSE;
   var t = findTileByKey(state.article, state.size);
   if(t) selectTile(t);
   if(state.area) document.getElementById('area').value = state.area;
@@ -464,7 +499,8 @@ function saveState(t, area, price, reserve){
     size: t.sizeKey,
     area: String(area),
     price: String(price),
-    reserve: String(reserve)
+    reserve: String(reserve),
+    warehouse: ACTIVE_WAREHOUSE
   };
   try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
   lastState = state;
@@ -507,6 +543,13 @@ var dropdownEl = document.getElementById('dropdown');
 var priceEl = document.getElementById('price');
 var reserveEl = document.getElementById('reserve');
 var reserveButtons = document.querySelectorAll('[data-reserve]');
+var warehouseEl = document.getElementById('warehouse');
+
+warehouseEl.addEventListener('change', function(){
+  ACTIVE_WAREHOUSE = warehouseEl.value === 'tver' ? 'tver' : 'moscow';
+  if(dropdownEl.classList.contains('open')) renderDropdown(searchEl.value);
+  if(selectedTile && document.getElementById('results').style.display === 'block') window.calculate();
+});
 
 function setReserve(value){
   reserveEl.value = value;
@@ -555,6 +598,7 @@ function renderDropdown(query){
   var html = '';
   for(var i=0;i<list.length;i++){
     var t = list[i];
+    var warehouse = warehouseStock(t);
     var availability = stockStatus(t);
     html += '<div class="opt" data-i="' + TILES.indexOf(t) + '">' +
               '<div class="t1">' +
@@ -565,7 +609,11 @@ function renderDropdown(query){
                 ' · В упаковке: ' + t.pack + ' м²' +
                 (t.price != null ? ' · ' + fmt(t.price) + ' ₽' : '') +
                 ' · <span class="stock ' + availability.className + '">' + availability.text + '</span>' +
-                (t.stock != null ? ' (' + fmt(t.stock, t.stock%1?2:0) + ' м²)' : '') +
+                (warehouse.stock != null
+                  ? ' · Остаток: ' + fmt(warehouse.stock, warehouse.stock%1?2:0) + ' м²' +
+                    ' · Резерв: ' + fmt(warehouse.reserved, warehouse.reserved%1?2:0) + ' м²' +
+                    ' · Доступно: ' + fmt(warehouse.available, warehouse.available%1?2:0) + ' м²'
+                  : '') +
               '</div>' +
             '</div>';
   }
@@ -581,9 +629,25 @@ function renderDropdown(query){
   }
 }
 
+function warehouseName(){
+  return ACTIVE_WAREHOUSE === 'tver' ? 'Тверь' : 'Москва';
+}
+
+function warehouseStock(t){
+  var stock = ACTIVE_WAREHOUSE === 'tver' ? t.stockTver : t.stockMoscow;
+  var reserved = ACTIVE_WAREHOUSE === 'tver' ? t.reserveTver : t.reserveMoscow;
+  if(!isFinite(reserved) || reserved < 0) reserved = 0;
+  return {
+    stock: stock,
+    reserved: reserved,
+    available: stock != null && isFinite(stock) ? Math.max(stock - reserved, 0) : null
+  };
+}
+
 function stockStatus(t){
-  if(t.stock == null || !isFinite(t.stock)) return { text: 'Наличие уточняйте', className: 'stock-unknown' };
-  var packs = Math.floor(t.stock / t.pack);
+  var warehouse = warehouseStock(t);
+  if(warehouse.available == null) return { text: 'Наличие уточняйте', className: 'stock-unknown' };
+  var packs = Math.floor(warehouse.available / t.pack);
   if(packs <= 0) return { text: 'Нет в наличии', className: 'stock-none' };
   if(packs <= 5) return { text: 'Мало', className: 'stock-low' };
   return { text: 'В наличии', className: 'stock-ok' };
@@ -676,7 +740,7 @@ window.calculate = function(){
                 ' | В упаковке: ' + t.pack + ' м²' +
                 (reserve > 0 ? ' | Запас: ' + fmt(reserve) + '% (' + fmt(areaWithReserve, 2) + ' м²)' : '') +
                 ' | Цена: ' + (isFinite(price) ? fmt(price) + ' руб' : '—') +
-                (t.stock != null ? ' | Склад Москва: ' + fmt(t.stock, t.stock%1?2:0) + ' м²' : '');
+                stockDetails(t);
   document.getElementById('r-details').textContent = details;
 
   handleStockWarning(t, pack, packs);
@@ -686,9 +750,32 @@ window.calculate = function(){
   saveState(t, area, priceEl.value, reserve);
 };
 
+window.clearCalculator = function(){
+  selectedTile = null;
+  lastState = null;
+  ACTIVE_WAREHOUSE = 'moscow';
+  warehouseEl.value = ACTIVE_WAREHOUSE;
+  searchEl.value = '';
+  document.getElementById('area').value = '';
+  priceEl.value = '';
+  setReserve('');
+  dropdownEl.innerHTML = '';
+  dropdownEl.classList.remove('open');
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('warn').classList.remove('show');
+  document.getElementById('copy-msg').textContent = '';
+  hideInlineErr();
+  try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+  if(window.history && window.history.replaceState){
+    window.history.replaceState(null, '', window.location.pathname);
+  }
+  searchEl.focus();
+};
+
 window.copyResult = function(){
   if(!lastState || !selectedTile) return;
   var t = selectedTile;
+  var warehouse = warehouseStock(t);
   var text = [
     'Расчёт плитки',
     'Артикул: ' + (t.article || '—'),
@@ -697,7 +784,10 @@ window.copyResult = function(){
     'Площадь в упаковке: ' + t.pack + ' м²',
     'Штук в упаковке: ' + (t.pieces != null ? t.pieces : '—'),
     'Вес упаковки: ' + (t.weight != null ? t.weight + ' кг' : '—'),
-    'Остаток на складе: ' + (t.stock != null ? fmt(t.stock, t.stock % 1 ? 2 : 0) + ' м²' : 'уточняйте'),
+    'Склад: ' + warehouseName(),
+    'Остаток: ' + (warehouse.stock != null ? fmt(warehouse.stock, warehouse.stock % 1 ? 2 : 0) + ' м²' : 'уточняйте'),
+    'В резерве: ' + fmt(warehouse.reserved, warehouse.reserved % 1 ? 2 : 0) + ' м²',
+    'Доступно: ' + (warehouse.available != null ? fmt(warehouse.available, warehouse.available % 1 ? 2 : 0) + ' м²' : 'уточняйте'),
     'Необходимая площадь: ' + document.getElementById('area').value + ' м²',
     'Запас: ' + (reserveEl.value || '0') + '%',
     'Цена за м²: ' + (priceEl.value || 'не указана') + ' руб',
@@ -750,11 +840,12 @@ function handleStockWarning(t, pack, packsNeeded){
   if(!warn){ return; }
   var warnText = document.getElementById('warn-text');
 
-  if(t.stock == null || !isFinite(t.stock)){
+  var warehouse = warehouseStock(t);
+  if(warehouse.available == null){
     warn.classList.remove('show');
     return;
   }
-  var packsAvail = Math.floor(t.stock / pack);
+  var packsAvail = Math.floor(warehouse.available / pack);
   if(packsAvail < packsNeeded){
     var shortPacks = packsNeeded - packsAvail;
     var shortArea = shortPacks * pack;
@@ -766,6 +857,15 @@ function handleStockWarning(t, pack, packsNeeded){
   }else{
     warn.classList.remove('show');
   }
+}
+
+function stockDetails(t){
+  var warehouse = warehouseStock(t);
+  if(warehouse.stock == null) return ' | Склад ' + warehouseName() + ': наличие уточняйте';
+  return ' | Склад ' + warehouseName() +
+    ': остаток ' + fmt(warehouse.stock, warehouse.stock%1?2:0) + ' м²' +
+    ', резерв ' + fmt(warehouse.reserved, warehouse.reserved%1?2:0) + ' м²' +
+    ', доступно ' + fmt(warehouse.available, warehouse.available%1?2:0) + ' м²';
 }
 </script>
 </body>
