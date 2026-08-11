@@ -41,7 +41,7 @@
     padding-right:calc(14px + env(safe-area-inset-right));
     -webkit-font-smoothing:antialiased;
   }
-  .wrap{max-width:640px;margin:0 auto}
+  .wrap{max-width:680px;margin:0 auto}
   header{text-align:center;margin-bottom:18px}
   header h1{
     color:#fff;font-size:26px;font-weight:800;letter-spacing:-.5px;
@@ -131,16 +131,31 @@
     background-image:none;
   }
   .btn-2nd:hover{transform:none;box-shadow:none;background:#e2e8f0}
+  .btn-ghost{
+    width:100%;margin-top:16px;padding:13px;font-size:14px;font-weight:800;
+    color:var(--brand-dark);background:#eff6ff;border:1.5px dashed #bfdbfe;
+    box-shadow:none;background-image:none;
+  }
+  .btn-ghost:hover{transform:none;box-shadow:none;background:#dbeafe}
   .btn-clear{width:100%;margin-top:10px}
   .reserve-options{display:flex;gap:8px;margin-bottom:9px}
   .reserve-option{width:auto;margin:0;padding:8px 12px;font-size:13px;background:#f1f5f9;color:var(--brand-dark);box-shadow:none;background-image:none}
   .reserve-option:hover{transform:none;box-shadow:none;background:#e2e8f0}
   .reserve-option.active{background:var(--brand);color:#fff}
+  .mode-toggle{
+    display:flex;background:#f1f5f9;border-radius:12px;padding:4px;margin-bottom:16px;gap:4px;
+  }
+  .mode-option{
+    flex:1;width:auto;margin:0;padding:9px 8px;font-size:12.5px;font-weight:700;
+    background:transparent;color:var(--muted);box-shadow:none;background-image:none;border-radius:9px;
+  }
+  .mode-option:hover{transform:none;box-shadow:none;background:transparent;color:var(--brand-dark)}
+  .mode-option.active{background:#fff;color:var(--brand-dark);box-shadow:0 1px 3px rgba(2,6,23,.12)}
+  .mode-packs{display:none}
   #copy-msg{
-    margin-top:8px;font-size:12.5px;color:var(--ok);font-weight:600;min-height:16px;
+    margin-top:8px;font-size:12.5px;color:var(--ok);font-weight:600;min-height:16px;text-align:center;
   }
 
-  #results{display:none;margin-top:16px}
   .res-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
   .res-cell{
     background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:14px;
@@ -168,12 +183,70 @@
   }
   #inline-err.show{display:block}
 
+  /* ---------- Позиции сметы ---------- */
+  .item-card{position:relative}
+  .item-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px}
+  .item-title{display:flex;align-items:center;gap:9px;min-width:0}
+  .item-badge{
+    display:inline-flex;align-items:center;justify-content:center;flex:none;
+    width:24px;height:24px;border-radius:50%;background:var(--brand);color:#fff;
+    font-size:12px;font-weight:800;
+  }
+  .item-title-text{
+    font-size:14.5px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .item-remove{
+    width:30px;height:30px;border-radius:9px;border:none;flex:none;
+    background:#fef2f2;color:var(--err);font-size:15px;line-height:1;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;transition:.15s;
+  }
+  .item-remove:hover{background:#fee2e2;transform:scale(1.05)}
+
+  .item-result{margin-top:16px;padding:14px 14px 12px;background:#f8fafc;border:1px solid var(--line);border-radius:12px}
+  .item-result-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .item-result-cell .k{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+  .item-result-cell .v{font-size:14.5px;font-weight:800;color:var(--ink);margin-top:3px}
+  .item-result-total{
+    margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);
+    display:flex;justify-content:space-between;align-items:baseline;
+  }
+  .item-result-total span:first-child{font-size:12.5px;color:var(--muted);font-weight:600}
+  .item-result-total .v{font-size:17px;font-weight:800;color:var(--brand-dark)}
+  .item-warn{
+    margin-top:10px;padding:9px 11px;border-radius:9px;background:#fff7ed;color:#c2410c;
+    font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;
+  }
+
+  #itemsList .item-card{margin-top:14px}
+  #itemsList .item-card:first-child{margin-top:16px}
+
+  /* ---------- Итоговая смета ---------- */
+  #summary{display:none;margin-top:16px}
+  .summary-head{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .summary-icon{
+    width:32px;height:32px;border-radius:9px;flex:none;
+    background:linear-gradient(135deg,#3b82f6,#6366f1);
+    display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;
+  }
+  .summary-title{font-size:16px;font-weight:800;color:var(--ink)}
+  .summary-table-wrap{overflow-x:auto;margin-top:16px;border-radius:12px;border:1px solid var(--line)}
+  .summary-table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:420px}
+  .summary-table th{
+    text-align:left;color:var(--muted);font-weight:700;padding:10px 12px;
+    background:#f8fafc;border-bottom:1px solid var(--line);font-size:10.5px;
+    text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;
+  }
+  .summary-table td{padding:10px 12px;border-bottom:1px solid #f1f5f9;color:var(--ink);white-space:nowrap}
+  .summary-table td:first-child{white-space:normal;font-weight:600}
+  .summary-table tr:last-child td{border-bottom:none}
+
   @media(max-width:480px){
     header h1{font-size:22px}
     .card{padding:18px 15px}
     .row{flex-direction:column;gap:0}
     .res-cell .v{font-size:18px}
     .res-cell.total .v{font-size:23px}
+    .item-result-grid{grid-template-columns:repeat(2,1fr);row-gap:12px}
   }
 </style>
 </head>
@@ -181,7 +254,7 @@
 <div class="wrap">
   <header>
     <h1><span class="icon">▦</span> Калькулятор плитки</h1>
-    <p>Расчёт упаковок, площади и стоимости по актуальной базе</p>
+    <p>Смета из нескольких позиций с расчётом упаковок, площади и стоимости</p>
   </header>
 
   <div id="status" class="st-load"><span class="dot"></span><span id="status-text">Загрузка данных…</span></div>
@@ -190,59 +263,29 @@
 
   <div class="card">
     <div class="field">
-      <label for="warehouse">Склад</label>
+      <label for="warehouse">Склад <span class="hint">— для проверки остатков</span></label>
       <select id="warehouse">
         <option value="moscow">Москва</option>
         <option value="tver">Тверь</option>
       </select>
     </div>
-
-    <div class="field">
-      <label>Плитка <span class="hint">— поиск по артикулу, названию или размеру</span></label>
-      <input type="text" id="search" placeholder="Начните вводить…" autocomplete="off" disabled>
-      <div class="dropdown" id="dropdown"></div>
-    </div>
-
-    <div class="row">
-      <div class="field">
-        <label>Необходимая площадь, м²</label>
-        <input type="text" id="area" placeholder="например 24,5" inputmode="decimal" autocomplete="off">
-        <div class="field-hint">Площадь поверхности, которую нужно облицевать, без учёта запаса.</div>
-      </div>
-      <div class="field">
-        <label>Цена за м², руб</label>
-        <input type="text" id="price" placeholder="авто / вручную" inputmode="decimal" autocomplete="off">
-      </div>
-    </div>
-
-    <div class="field">
-      <label>Запас, % <span class="hint">— на подрезку и возможный брак</span></label>
-      <div class="reserve-options" aria-label="Быстрый выбор запаса">
-        <button class="btn reserve-option" type="button" data-reserve="5" aria-pressed="false">5%</button>
-        <button class="btn reserve-option" type="button" data-reserve="10" aria-pressed="false">10%</button>
-        <button class="btn reserve-option" type="button" data-reserve="15" aria-pressed="false">15%</button>
-      </div>
-      <input type="text" id="reserve" placeholder="Другой процент" inputmode="decimal" autocomplete="off">
-    </div>
-
-    <button class="btn" id="calcBtn" onclick="window.calculate()">Рассчитать</button>
-    <button class="btn btn-2nd btn-clear" id="clearBtn" type="button" onclick="window.clearCalculator()">Очистить</button>
-    <div id="inline-err"></div>
   </div>
 
-  <div id="results">
+  <div id="itemsList"></div>
+
+  <button class="btn btn-ghost" id="addItemBtn" type="button">+ Добавить позицию</button>
+  <button class="btn btn-2nd btn-clear" id="clearBtn" type="button" onclick="window.clearCalculator()">Очистить всю смету</button>
+  <div id="inline-err"></div>
+
+  <div id="summary">
     <div class="card">
-      <div class="res-grid">
-        <div class="res-cell"><div class="k">Упаковок</div><div class="v" id="r-packs">—</div></div>
-        <div class="res-cell"><div class="k">Площадь к покупке</div><div class="v" id="r-area">—</div></div>
-        <div class="res-cell" id="c-pieces"><div class="k">Штук всего</div><div class="v" id="r-pieces">—</div></div>
-        <div class="res-cell" id="c-weight"><div class="k">Вес, кг</div><div class="v" id="r-weight">—</div></div>
-        <div class="res-cell total"><div class="k">Итого</div><div class="v" id="r-total">—</div></div>
+      <div class="summary-head">
+        <span class="summary-icon">Σ</span>
+        <span class="summary-title">Итого по смете</span>
       </div>
-      <div class="details" id="r-details">—</div>
-      <div class="field-hint">Количество округляется вверх до целой упаковки: купить часть упаковки нельзя.</div>
+      <div id="summary-body"></div>
       <div id="warn"><span class="wi">⚠️</span><span id="warn-text"></span></div>
-      <div class="row" style="margin-top:14px">
+      <div class="row" style="margin-top:16px">
         <button class="btn btn-2nd" id="copyResultBtn" onclick="window.copyResult()">Скопировать результат</button>
         <button class="btn btn-2nd" id="copyLinkBtn" onclick="window.copyShareLink()">Скопировать ссылку</button>
       </div>
@@ -257,8 +300,8 @@ var SHEETS = ['60*60', '60*120', '60x60', '60x120', '60х60', '60х120'];
 
 var TILES = [];
 var SEEN = {};
-var selectedTile = null;
 var ACTIVE_WAREHOUSE = 'moscow';
+var isFirstLoad = true;
 
 var HARD = {
   '60x60':  { pack: 1.8,  pieces: 5, weight: 34 },
@@ -302,6 +345,11 @@ function fmt(n, dec){
   var parts = x.toFixed(dec).split('.');
   parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   return parts.join('.');
+}
+
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 function findCols(headers){
@@ -438,13 +486,22 @@ function allDone(){
   var stt = document.getElementById('status-text');
   var retry = document.getElementById('retryBtn');
   var refresh = document.getElementById('refreshBtn');
+  var searches = document.querySelectorAll('.item-search');
   if(TILES.length > 0){
     st.className = 'st-ok';
     stt.textContent = 'Успешно загружено ' + TILES.length + ' позиций';
     retry.style.display = 'none';
     refresh.disabled = false;
-    document.getElementById('search').disabled = false;
-    restoreState();
+    for(var i=0;i<searches.length;i++){
+      searches[i].disabled = false;
+      searches[i].placeholder = 'Начните вводить…';
+    }
+    if(isFirstLoad){
+      isFirstLoad = false;
+      restoreState();
+    }else{
+      reSyncTiles();
+    }
   }else{
     st.className = 'st-err';
     stt.textContent = 'Ошибка: не удалось загрузить данные из таблицы';
@@ -453,67 +510,11 @@ function allDone(){
   }
 }
 
-/* ---------- Восстановление состояния: из ссылки или из localStorage ---------- */
-var STORAGE_KEY = 'tileCalcState';
-
-function findTileByKey(article, sizeKey){
-  for(var i=0;i<TILES.length;i++){
-    if(TILES[i].article === article && TILES[i].sizeKey === sizeKey) return TILES[i];
-  }
-  return null;
-}
-
-function restoreState(){
-  var params = new URLSearchParams(window.location.search);
-  var state = null;
-  if(params.has('article')){
-    state = {
-      article: params.get('article') || '',
-      size: params.get('size') || '',
-      area: params.get('area') || '',
-      price: params.get('price') || '',
-      reserve: params.get('reserve') || '',
-      warehouse: params.get('warehouse') || 'moscow'
-    };
-  }else{
-    try{
-      var raw = localStorage.getItem(STORAGE_KEY);
-      if(raw) state = JSON.parse(raw);
-    }catch(e){}
-  }
-  if(!state) return;
-
-  ACTIVE_WAREHOUSE = state.warehouse === 'tver' ? 'tver' : 'moscow';
-  document.getElementById('warehouse').value = ACTIVE_WAREHOUSE;
-  var t = findTileByKey(state.article, state.size);
-  if(t) selectTile(t);
-  if(state.area) document.getElementById('area').value = state.area;
-  if(state.price) priceEl.value = state.price;
-  if(state.reserve) setReserve(state.reserve);
-  if(t && state.area) window.calculate();
-}
-
-function saveState(t, area, price, reserve){
-  var state = {
-    article: t.article,
-    size: t.sizeKey,
-    area: String(area),
-    price: String(price),
-    reserve: String(reserve),
-    warehouse: ACTIVE_WAREHOUSE
-  };
-  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
-  lastState = state;
-}
-var lastState = null;
-
 function startLoading(){
   var attempt = ++loadAttempt;
   TILES = [];
   SEEN = {};
-  selectedTile = null;
   pending = SHEETS.length;
-  document.getElementById('search').disabled = true;
   document.getElementById('status').className = 'st-load';
   document.getElementById('status-text').textContent = 'Загрузка данных…';
   document.getElementById('retryBtn').style.display = 'none';
@@ -536,98 +537,14 @@ function startLoading(){
 
 document.getElementById('retryBtn').addEventListener('click', startLoading);
 document.getElementById('refreshBtn').addEventListener('click', startLoading);
-startLoading();
 
-var searchEl = document.getElementById('search');
-var dropdownEl = document.getElementById('dropdown');
-var priceEl = document.getElementById('price');
-var reserveEl = document.getElementById('reserve');
-var reserveButtons = document.querySelectorAll('[data-reserve]');
 var warehouseEl = document.getElementById('warehouse');
-
 warehouseEl.addEventListener('change', function(){
   ACTIVE_WAREHOUSE = warehouseEl.value === 'tver' ? 'tver' : 'moscow';
-  if(dropdownEl.classList.contains('open')) renderDropdown(searchEl.value);
-  if(selectedTile && document.getElementById('results').style.display === 'block') window.calculate();
+  var opens = document.querySelectorAll('.dropdown.open');
+  for(var i=0;i<opens.length;i++){ opens[i].classList.remove('open'); }
+  recalcAll();
 });
-
-function setReserve(value){
-  reserveEl.value = value;
-  for(var i=0;i<reserveButtons.length;i++){
-    var active = reserveButtons[i].getAttribute('data-reserve') === String(value);
-    reserveButtons[i].classList.toggle('active', active);
-    reserveButtons[i].setAttribute('aria-pressed', active ? 'true' : 'false');
-  }
-}
-
-for(var rb=0;rb<reserveButtons.length;rb++){
-  reserveButtons[rb].addEventListener('click', function(){ setReserve(this.getAttribute('data-reserve')); });
-}
-reserveEl.addEventListener('input', function(){
-  for(var i=0;i<reserveButtons.length;i++){
-    reserveButtons[i].classList.remove('active');
-    reserveButtons[i].setAttribute('aria-pressed', 'false');
-  }
-});
-
-function esc(s){
-  return String(s == null ? '' : s)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-function renderDropdown(query){
-  var q = query.toLowerCase().trim();
-  var list = TILES;
-  if(q){
-    var qx = q.replace(/[хx*×]/g,'x');
-    list = TILES.filter(function(t){
-      return (t.article && t.article.toLowerCase().indexOf(q) !== -1) ||
-             (t.name && t.name.toLowerCase().indexOf(q) !== -1) ||
-             (t.sizeLabel && t.sizeLabel.toLowerCase().indexOf(q) !== -1) ||
-             (t.sizeKey && t.sizeKey.indexOf(qx) !== -1);
-    });
-  }
-  list = list.slice(0, 50);
-
-  if(list.length === 0){
-    dropdownEl.innerHTML = '<div class="opt-empty">Ничего не найдено</div>';
-    dropdownEl.classList.add('open');
-    return;
-  }
-
-  var html = '';
-  for(var i=0;i<list.length;i++){
-    var t = list[i];
-    var warehouse = warehouseStock(t);
-    var availability = stockStatus(t);
-    html += '<div class="opt" data-i="' + TILES.indexOf(t) + '">' +
-              '<div class="t1">' +
-                (t.article ? '<span class="badge">' + esc(t.article) + '</span>' : '') +
-                esc(t.name) +
-              '</div>' +
-              '<div class="t2">Размер: ' + esc(t.sizeLabel || '—') +
-                ' · В упаковке: ' + t.pack + ' м²' +
-                (t.price != null ? ' · ' + fmt(t.price) + ' ₽' : '') +
-                ' · <span class="stock ' + availability.className + '">' + availability.text + '</span>' +
-                (warehouse.stock != null
-                  ? ' · Остаток: ' + fmt(warehouse.stock, warehouse.stock%1?2:0) + ' м²' +
-                    ' · Резерв: ' + fmt(warehouse.reserved, warehouse.reserved%1?2:0) + ' м²' +
-                    ' · Доступно: ' + fmt(warehouse.available, warehouse.available%1?2:0) + ' м²'
-                  : '') +
-              '</div>' +
-            '</div>';
-  }
-  dropdownEl.innerHTML = html;
-  dropdownEl.classList.add('open');
-
-  var opts = dropdownEl.querySelectorAll('.opt');
-  for(var k=0;k<opts.length;k++){
-    opts[k].addEventListener('click', function(){
-      var i = parseInt(this.getAttribute('data-i'), 10);
-      selectTile(TILES[i]);
-    });
-  }
-}
 
 function warehouseName(){
   return ACTIVE_WAREHOUSE === 'tver' ? 'Тверь' : 'Москва';
@@ -653,115 +570,485 @@ function stockStatus(t){
   return { text: 'В наличии', className: 'stock-ok' };
 }
 
-function selectTile(t){
-  if(!t) return;
-  selectedTile = t;
-  searchEl.value = (t.article ? t.article + ' — ' : '') + t.name +
-                   (t.sizeLabel ? ' (' + t.sizeLabel + ')' : '');
-  if(t.price != null){ priceEl.value = String(t.price).replace('.', ','); }
-  dropdownEl.classList.remove('open');
-  hideInlineErr();
-}
-
-searchEl.addEventListener('input', function(){
-  selectedTile = null;
-  renderDropdown(searchEl.value);
-});
-searchEl.addEventListener('focus', function(){
-  if(TILES.length) renderDropdown(searchEl.value);
-});
-document.addEventListener('click', function(e){
-  if(!searchEl.contains(e.target) && !dropdownEl.contains(e.target)){
-    dropdownEl.classList.remove('open');
+function findTileByKey(article, sizeKey){
+  for(var i=0;i<TILES.length;i++){
+    if(TILES[i].article === article && TILES[i].sizeKey === sizeKey) return TILES[i];
   }
+  return null;
+}
+
+/* ============================================================
+   Позиции сметы
+   ============================================================ */
+var items = [];
+var itemSeq = 0;
+var itemsListEl = document.getElementById('itemsList');
+
+function createItemRow(item){
+  var row = document.createElement('div');
+  row.className = 'card item-card';
+  row.innerHTML =
+    '<div class="item-title-row">' +
+      '<div class="item-title"><span class="item-badge"></span><span class="item-title-text">Новая позиция</span></div>' +
+      '<button type="button" class="item-remove" aria-label="Удалить позицию">✕</button>' +
+    '</div>' +
+    '<div class="field">' +
+      '<label>Плитка <span class="hint">— поиск по артикулу, названию или размеру</span></label>' +
+      '<input type="text" class="item-search" placeholder="' + (TILES.length ? 'Начните вводить…' : 'Загрузка каталога…') + '" autocomplete="off"' + (TILES.length ? '' : ' disabled') + '>' +
+      '<div class="dropdown item-dropdown"></div>' +
+    '</div>' +
+    '<div class="mode-toggle">' +
+      '<button class="btn mode-option active" type="button" data-mode="area">По площади</button>' +
+      '<button class="btn mode-option" type="button" data-mode="packs">По упаковкам</button>' +
+    '</div>' +
+    '<div class="row">' +
+      '<div class="field mode-area">' +
+        '<label>Площадь, м²</label>' +
+        '<input type="text" class="item-area" placeholder="например 24,5" inputmode="decimal" autocomplete="off">' +
+      '</div>' +
+      '<div class="field mode-packs">' +
+        '<label>Сколько упаковок купить</label>' +
+        '<input type="text" class="item-packs" placeholder="например 5" inputmode="numeric" autocomplete="off">' +
+      '</div>' +
+      '<div class="field">' +
+        '<label>Цена за м², руб</label>' +
+        '<input type="text" class="item-price" placeholder="авто / вручную" inputmode="decimal" autocomplete="off">' +
+      '</div>' +
+    '</div>' +
+    '<div class="field mode-area">' +
+      '<label>Запас, % <span class="hint">— на подрезку и брак</span></label>' +
+      '<div class="reserve-options">' +
+        '<button class="btn reserve-option" type="button" data-reserve="5">5%</button>' +
+        '<button class="btn reserve-option" type="button" data-reserve="10">10%</button>' +
+        '<button class="btn reserve-option" type="button" data-reserve="15">15%</button>' +
+      '</div>' +
+      '<input type="text" class="item-reserve" placeholder="Другой процент" inputmode="decimal" autocomplete="off">' +
+    '</div>' +
+    '<div class="item-result" style="display:none"></div>';
+
+  row.dataset.id = item.id;
+
+  var searchEl = row.querySelector('.item-search');
+  var dropdownEl = row.querySelector('.item-dropdown');
+  var areaEl = row.querySelector('.item-area');
+  var packsEl = row.querySelector('.item-packs');
+  var priceEl = row.querySelector('.item-price');
+  var reserveEl = row.querySelector('.item-reserve');
+  var reserveBtns = row.querySelectorAll('.reserve-option');
+  var removeBtn = row.querySelector('.item-remove');
+  var titleText = row.querySelector('.item-title-text');
+  var badgeEl = row.querySelector('.item-badge');
+  var modeBtns = row.querySelectorAll('.mode-option');
+  var areaFields = row.querySelectorAll('.mode-area');
+  var packsFields = row.querySelectorAll('.mode-packs');
+
+  function setMode(mode){
+    item.mode = mode;
+    for(var i=0;i<modeBtns.length;i++){
+      modeBtns[i].classList.toggle('active', modeBtns[i].getAttribute('data-mode') === mode);
+    }
+    for(var i=0;i<areaFields.length;i++){ areaFields[i].style.display = mode === 'area' ? 'block' : 'none'; }
+    for(var i=0;i<packsFields.length;i++){ packsFields[i].style.display = mode === 'packs' ? 'block' : 'none'; }
+  }
+  setMode('area');
+
+  for(var mb=0; mb<modeBtns.length; mb++){
+    modeBtns[mb].addEventListener('click', function(){
+      setMode(this.getAttribute('data-mode'));
+      recalcAll();
+    });
+  }
+
+  packsEl.addEventListener('input', function(){ item.packsCount = packsEl.value; recalcAll(); });
+
+  function setReserveUI(value){
+    reserveEl.value = value;
+    for(var i=0;i<reserveBtns.length;i++){
+      var active = reserveBtns[i].getAttribute('data-reserve') === String(value);
+      reserveBtns[i].classList.toggle('active', active);
+    }
+  }
+
+  for(var rb=0; rb<reserveBtns.length; rb++){
+    reserveBtns[rb].addEventListener('click', function(){
+      setReserveUI(this.getAttribute('data-reserve'));
+      item.reserve = reserveEl.value;
+      recalcAll();
+    });
+  }
+  reserveEl.addEventListener('input', function(){
+    for(var i=0;i<reserveBtns.length;i++){ reserveBtns[i].classList.remove('active'); }
+    item.reserve = reserveEl.value;
+    recalcAll();
+  });
+
+  function updateTitle(){
+    titleText.textContent = item.tile
+      ? item.tile.name + (item.tile.sizeLabel ? ' (' + item.tile.sizeLabel + ')' : '')
+      : 'Новая позиция';
+  }
+
+  function renderRowDropdown(query){
+    var q = query.toLowerCase().trim();
+    var list = TILES;
+    if(q){
+      var qx = q.replace(/[хx*×]/g,'x');
+      list = TILES.filter(function(t){
+        return (t.article && t.article.toLowerCase().indexOf(q) !== -1) ||
+               (t.name && t.name.toLowerCase().indexOf(q) !== -1) ||
+               (t.sizeLabel && t.sizeLabel.toLowerCase().indexOf(q) !== -1) ||
+               (t.sizeKey && t.sizeKey.indexOf(qx) !== -1);
+      });
+    }
+    list = list.slice(0, 50);
+
+    if(list.length === 0){
+      dropdownEl.innerHTML = '<div class="opt-empty">Ничего не найдено</div>';
+      dropdownEl.classList.add('open');
+      return;
+    }
+
+    var html = '';
+    for(var i=0;i<list.length;i++){
+      var t = list[i];
+      var warehouse = warehouseStock(t);
+      var availability = stockStatus(t);
+      html += '<div class="opt" data-i="' + TILES.indexOf(t) + '">' +
+                '<div class="t1">' +
+                  (t.article ? '<span class="badge">' + esc(t.article) + '</span>' : '') +
+                  esc(t.name) +
+                '</div>' +
+                '<div class="t2">Размер: ' + esc(t.sizeLabel || '—') +
+                  ' · В упаковке: ' + t.pack + ' м²' +
+                  (t.price != null ? ' · ' + fmt(t.price) + ' ₽' : '') +
+                  ' · <span class="stock ' + availability.className + '">' + availability.text + '</span>' +
+                  (warehouse.stock != null ? ' · Доступно: ' + fmt(warehouse.available, warehouse.available%1?2:0) + ' м²' : '') +
+                '</div>' +
+              '</div>';
+    }
+    dropdownEl.innerHTML = html;
+    dropdownEl.classList.add('open');
+
+    var opts = dropdownEl.querySelectorAll('.opt');
+    for(var k=0;k<opts.length;k++){
+      opts[k].addEventListener('click', function(){
+        var idx = parseInt(this.getAttribute('data-i'), 10);
+        selectRowTile(TILES[idx]);
+      });
+    }
+  }
+
+  function selectRowTile(t){
+    if(!t) return;
+    item.tile = t;
+    searchEl.value = (t.article ? t.article + ' — ' : '') + t.name +
+                      (t.sizeLabel ? ' (' + t.sizeLabel + ')' : '');
+    if(t.price != null && !priceEl.value){
+      priceEl.value = String(t.price).replace('.', ',');
+      item.price = priceEl.value;
+    }
+    dropdownEl.classList.remove('open');
+    updateTitle();
+    hideInlineErr();
+    recalcAll();
+  }
+
+  searchEl.addEventListener('input', function(){
+    item.tile = null;
+    updateTitle();
+    renderRowDropdown(searchEl.value);
+    recalcAll();
+  });
+  searchEl.addEventListener('focus', function(){
+    if(TILES.length) renderRowDropdown(searchEl.value);
+  });
+  document.addEventListener('click', function(e){
+    if(!searchEl.contains(e.target) && !dropdownEl.contains(e.target)){
+      dropdownEl.classList.remove('open');
+    }
+  });
+
+  areaEl.addEventListener('input', function(){ item.area = areaEl.value; recalcAll(); });
+  priceEl.addEventListener('input', function(){ item.price = priceEl.value; recalcAll(); });
+
+  removeBtn.addEventListener('click', function(){ removeItem(item.id); });
+
+  item._el = row;
+  item._searchEl = searchEl;
+  item._areaEl = areaEl;
+  item._packsEl = packsEl;
+  item._priceEl = priceEl;
+  item._reserveEl = reserveEl;
+  item._resultEl = row.querySelector('.item-result');
+  item._badgeEl = badgeEl;
+  item._setReserveUI = setReserveUI;
+  item._selectRowTile = selectRowTile;
+  item._updateTitle = updateTitle;
+  item._setMode = setMode;
+
+  return row;
+}
+
+function addItem(){
+  itemSeq++;
+  var item = { id: itemSeq, tile: null, area: '', price: '', reserve: '', mode: 'area', packsCount: '' };
+  items.push(item);
+  var row = createItemRow(item);
+  itemsListEl.appendChild(row);
+  renumberItems();
+  return item;
+}
+
+function removeItem(id){
+  var idx = -1;
+  for(var i=0;i<items.length;i++){ if(items[i].id === id){ idx = i; break; } }
+  if(idx === -1) return;
+  var item = items[idx];
+  item._el.parentNode.removeChild(item._el);
+  items.splice(idx, 1);
+  if(items.length === 0){ addItem(); }
+  renumberItems();
+  recalcAll();
+}
+
+function renumberItems(){
+  for(var i=0;i<items.length;i++){
+    items[i]._badgeEl.textContent = String(i + 1);
+  }
+}
+
+document.getElementById('addItemBtn').addEventListener('click', function(){
+  addItem();
 });
 
-function showInlineErr(msg){
-  var el = document.getElementById('inline-err');
-  el.textContent = msg;
-  el.classList.add('show');
+function computeItemResult(item){
+  if(!item.tile) return null;
+  var t = item.tile;
+  var pack = t.pack;
+  var price = toNumber(item.price);
+  if(!isFinite(price) || price < 0){ price = (t.price != null ? t.price : NaN); }
+
+  var area, reserve, areaWithReserve, packs;
+  if(item.mode === 'packs'){
+    var packsWanted = toNumber(item.packsCount);
+    if(!isFinite(packsWanted) || packsWanted <= 0) return null;
+    reserve = 0;
+    packs = Math.ceil(packsWanted - 1e-9);
+    areaWithReserve = packs * pack;
+    area = packs * pack;
+  }else{
+    area = toNumber(item.area);
+    if(!isFinite(area) || area <= 0) return null;
+    reserve = toNumber(item.reserve);
+    if(!isFinite(reserve) || reserve < 0) reserve = 0;
+    areaWithReserve = area * (1 + reserve / 100);
+    packs = Math.ceil(areaWithReserve / pack - 1e-9);
+  }
+  var buyArea = packs * pack;
+  var total = isFinite(price) ? buyArea * price : NaN;
+  var pieces = t.pieces != null ? packs * t.pieces : null;
+  var weight = t.weight != null ? packs * t.weight : null;
+  var warehouse = warehouseStock(t);
+  var packsAvail = warehouse.available != null ? Math.floor(warehouse.available / pack) : null;
+  var shortage = (packsAvail != null && packsAvail < packs)
+    ? { shortPacks: packs - packsAvail, shortArea: (packs - packsAvail) * pack }
+    : null;
+  return {
+    area: area, price: price, reserve: reserve, areaWithReserve: areaWithReserve,
+    packs: packs, buyArea: buyArea, total: total, pieces: pieces, weight: weight,
+    shortage: shortage
+  };
 }
+
+function renderItemResult(item, res){
+  var el = item._resultEl;
+  if(!res){ el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.style.display = 'block';
+  var t = item.tile;
+  var warehouse = warehouseStock(t);
+  el.innerHTML =
+    '<div class="item-result-grid">' +
+      '<div class="item-result-cell"><div class="k">Упаковок</div><div class="v">' + fmt(res.packs) + ' уп.</div></div>' +
+      '<div class="item-result-cell"><div class="k">К покупке</div><div class="v">' + fmt(res.buyArea, 2) + ' м²</div></div>' +
+      '<div class="item-result-cell"><div class="k">Штук</div><div class="v">' + (res.pieces != null ? fmt(res.pieces) + ' шт.' : '—') + '</div></div>' +
+      '<div class="item-result-cell"><div class="k">Вес</div><div class="v">' + (res.weight != null ? fmt(res.weight, 0) + ' кг' : '—') + '</div></div>' +
+    '</div>' +
+    '<div class="item-result-total"><span>Стоимость позиции</span><span class="v">' + (isFinite(res.total) ? fmt(res.total, 0) + ' руб' : 'укажите цену') + '</span></div>' +
+    (res.reserve > 0 ? '<div class="field-hint">Запас ' + fmt(res.reserve) + '%: ' + fmt(res.areaWithReserve, 2) + ' м²</div>' : '') +
+    (warehouse.stock != null ? '<div class="field-hint">Склад ' + warehouseName() + ': доступно ' + fmt(warehouse.available, warehouse.available%1?2:0) + ' м²</div>' : '') +
+    (res.shortage ? '<div class="item-warn">⚠️ Не хватает ' + fmt(res.shortage.shortPacks) + ' упак (' + fmt(res.shortage.shortArea, 2) + ' м²)</div>' : '');
+}
+
+function renderSummary(anyValid, totals){
+  var summaryEl = document.getElementById('summary');
+  if(!anyValid){
+    summaryEl.style.display = 'none';
+    return;
+  }
+  summaryEl.style.display = 'block';
+
+  var body = document.getElementById('summary-body');
+  var rowsHtml = '';
+  for(var i=0;i<totals.rows.length;i++){
+    var r = totals.rows[i];
+    rowsHtml += '<tr><td>' + esc(r.name) + '</td><td>' + fmt(r.packs) + ' уп.</td><td>' +
+                fmt(r.buyArea, 2) + ' м²</td><td>' + (isFinite(r.total) ? fmt(r.total, 0) + ' руб' : '—') + '</td></tr>';
+  }
+  body.innerHTML =
+    '<div class="res-grid">' +
+      '<div class="res-cell"><div class="k">Позиций</div><div class="v">' + totals.rows.length + '</div></div>' +
+      '<div class="res-cell"><div class="k">Упаковок всего</div><div class="v">' + fmt(totals.totalPacks) + '</div></div>' +
+      '<div class="res-cell"><div class="k">Площадь к покупке</div><div class="v">' + fmt(totals.totalBuyArea, 2) + ' м²</div></div>' +
+      '<div class="res-cell"><div class="k">Вес всего</div><div class="v">' + (totals.totalWeight ? fmt(totals.totalWeight, 0) + ' кг' : '—') + '</div></div>' +
+      '<div class="res-cell total"><div class="k">Итого по смете' + (totals.costUnknown ? ' (не все позиции с ценой)' : '') + '</div><div class="v">' + fmt(totals.totalCost, 0) + ' руб</div></div>' +
+    '</div>' +
+    '<div class="summary-table-wrap"><table class="summary-table"><thead><tr><th>Позиция</th><th>Упак.</th><th>Площадь</th><th>Стоимость</th></tr></thead><tbody>' +
+    rowsHtml + '</tbody></table></div>';
+
+  renderSummaryWarning(totals);
+}
+
+function renderSummaryWarning(totals){
+  var warn = document.getElementById('warn');
+  var warnText = document.getElementById('warn-text');
+  if(totals.shortages.length === 0){
+    warn.classList.remove('show');
+    return;
+  }
+  var parts = [];
+  for(var i=0;i<totals.shortages.length;i++){
+    parts.push(totals.shortages[i].name + ' — не хватает ' + fmt(totals.shortages[i].shortPacks) + ' упак');
+  }
+  warnText.textContent = 'Внимание! На складе ' + warehouseName() + ' не хватает: ' + parts.join('; ');
+  warn.classList.add('show');
+}
+
+function recalcAll(){
+  var anyValid = false;
+  var totalBuyArea = 0, totalWeight = 0, totalCost = 0, costUnknown = false, totalPacks = 0;
+  var rows = [];
+  var shortages = [];
+
+  for(var i=0;i<items.length;i++){
+    var item = items[i];
+    var res = computeItemResult(item);
+    renderItemResult(item, res);
+    if(res){
+      anyValid = true;
+      totalBuyArea += res.buyArea;
+      totalPacks += res.packs;
+      if(res.weight != null) totalWeight += res.weight;
+      if(isFinite(res.total)) totalCost += res.total; else costUnknown = true;
+      var name = item.tile.name + (item.tile.sizeLabel ? ' (' + item.tile.sizeLabel + ')' : '');
+      rows.push({ name: name, packs: res.packs, buyArea: res.buyArea, total: res.total });
+      if(res.shortage){ shortages.push({ name: name, shortPacks: res.shortage.shortPacks }); }
+    }
+  }
+
+  renderSummary(anyValid, {
+    totalBuyArea: totalBuyArea, totalWeight: totalWeight, totalCost: totalCost,
+    costUnknown: costUnknown, totalPacks: totalPacks, rows: rows, shortages: shortages
+  });
+
+  if(anyValid){ saveState(); }
+}
+
+function reSyncTiles(){
+  for(var i=0;i<items.length;i++){
+    var item = items[i];
+    if(item.tile){
+      var fresh = findTileByKey(item.tile.article, item.tile.sizeKey);
+      if(fresh) item.tile = fresh;
+    }
+  }
+  recalcAll();
+}
+
 function hideInlineErr(){
   var el = document.getElementById('inline-err');
   if(el){ el.classList.remove('show'); }
 }
 
-window.calculate = function(){
-  hideInlineErr();
+/* ---------- Восстановление состояния: из ссылки или из localStorage ---------- */
+var STORAGE_KEY = 'tileCalcState';
+var lastState = null;
 
-  if(!selectedTile){
-    showInlineErr('Выберите плитку из списка.');
+function saveState(){
+  var validItems = [];
+  for(var i=0;i<items.length;i++){
+    var it = items[i];
+    var hasValue = it.mode === 'packs' ? toNumber(it.packsCount) > 0 : toNumber(it.area) > 0;
+    if(it.tile && hasValue){
+      validItems.push({
+        article: it.tile.article, size: it.tile.sizeKey, mode: it.mode,
+        area: String(it.area), packsCount: String(it.packsCount || ''),
+        price: String(it.price || ''), reserve: String(it.reserve || '')
+      });
+    }
+  }
+  if(!validItems.length) return;
+  var state = { warehouse: ACTIVE_WAREHOUSE, items: validItems };
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+  lastState = state;
+}
+
+function restoreState(){
+  var params = new URLSearchParams(window.location.search);
+  var state = null;
+  if(params.has('items')){
+    try{
+      state = { warehouse: params.get('warehouse') || 'moscow', items: JSON.parse(params.get('items')) };
+    }catch(e){}
+  }else{
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(raw) state = JSON.parse(raw);
+    }catch(e){}
+  }
+  if(!state || !state.items || !state.items.length){
+    if(items.length === 0) addItem();
     return;
   }
-  var t = selectedTile;
 
-  var area = toNumber(document.getElementById('area').value);
-  if(!isFinite(area) || area <= 0){
-    showInlineErr('Укажите необходимую площадь (в м²).');
-    return;
+  ACTIVE_WAREHOUSE = state.warehouse === 'tver' ? 'tver' : 'moscow';
+  warehouseEl.value = ACTIVE_WAREHOUSE;
+
+  while(items.length){
+    var it = items[items.length - 1];
+    it._el.parentNode.removeChild(it._el);
+    items.pop();
   }
 
-  var price = toNumber(priceEl.value);
-  if(!isFinite(price) || price < 0){
-    price = (t.price != null ? t.price : NaN);
+  for(var i=0;i<state.items.length;i++){
+    var s = state.items[i];
+    var t = findTileByKey(s.article, s.size);
+    var item = addItem();
+    if(t){ item._selectRowTile(t); }
+    if(s.mode === 'packs'){
+      item._setMode('packs');
+      item._packsEl.value = s.packsCount || ''; item.packsCount = item._packsEl.value;
+    }else{
+      item._areaEl.value = s.area || ''; item.area = item._areaEl.value;
+      if(s.reserve){ item._setReserveUI(s.reserve); item.reserve = s.reserve; }
+    }
+    if(s.price){ item._priceEl.value = s.price; item.price = s.price; }
   }
 
-  var reserve = toNumber(document.getElementById('reserve').value);
-  if(!isFinite(reserve) || reserve < 0) reserve = 0;
-  var areaWithReserve = area * (1 + reserve / 100);
-
-  var pack = t.pack;
-  var packs = Math.ceil(areaWithReserve / pack - 1e-9);
-  var buyArea = packs * pack;
-  var total = isFinite(price) ? buyArea * price : NaN;
-
-  document.getElementById('r-packs').textContent = fmt(packs) + ' уп.';
-  document.getElementById('r-area').textContent  = fmt(buyArea, 2) + ' м²';
-
-  var cPieces = document.getElementById('c-pieces');
-  var cWeight = document.getElementById('c-weight');
-  if(t.pieces != null){
-    cPieces.style.display = '';
-    document.getElementById('r-pieces').textContent = fmt(packs * t.pieces) + ' шт.';
-  }else{
-    cPieces.style.display = 'none';
-  }
-  if(t.weight != null){
-    cWeight.style.display = '';
-    document.getElementById('r-weight').textContent = fmt(packs * t.weight, 0) + ' кг';
-  }else{
-    cWeight.style.display = 'none';
-  }
-
-  document.getElementById('r-total').textContent =
-    isFinite(total) ? fmt(total, 0) + ' руб' : 'укажите цену';
-
-  var details = 'Размер: ' + (t.sizeLabel || '—') +
-                ' | В упаковке: ' + t.pack + ' м²' +
-                (reserve > 0 ? ' | Запас: ' + fmt(reserve) + '% (' + fmt(areaWithReserve, 2) + ' м²)' : '') +
-                ' | Цена: ' + (isFinite(price) ? fmt(price) + ' руб' : '—') +
-                stockDetails(t);
-  document.getElementById('r-details').textContent = details;
-
-  handleStockWarning(t, pack, packs);
-
-  document.getElementById('results').style.display = 'block';
-  document.getElementById('copy-msg').textContent = '';
-  saveState(t, area, priceEl.value, reserve);
-};
+  if(items.length === 0) addItem();
+  recalcAll();
+}
 
 window.clearCalculator = function(){
-  selectedTile = null;
-  lastState = null;
   ACTIVE_WAREHOUSE = 'moscow';
   warehouseEl.value = ACTIVE_WAREHOUSE;
-  searchEl.value = '';
-  document.getElementById('area').value = '';
-  priceEl.value = '';
-  setReserve('');
-  dropdownEl.innerHTML = '';
-  dropdownEl.classList.remove('open');
-  document.getElementById('results').style.display = 'none';
+  while(items.length){
+    var it = items[items.length - 1];
+    it._el.parentNode.removeChild(it._el);
+    items.pop();
+  }
+  addItem();
+  lastState = null;
+  document.getElementById('summary').style.display = 'none';
   document.getElementById('warn').classList.remove('show');
   document.getElementById('copy-msg').textContent = '';
   hideInlineErr();
@@ -769,40 +1056,33 @@ window.clearCalculator = function(){
   if(window.history && window.history.replaceState){
     window.history.replaceState(null, '', window.location.pathname);
   }
-  searchEl.focus();
 };
 
 window.copyResult = function(){
-  if(!lastState || !selectedTile) return;
-  var t = selectedTile;
-  var warehouse = warehouseStock(t);
-  var text = [
-    'Расчёт плитки',
-    'Артикул: ' + (t.article || '—'),
-    'Наименование: ' + (t.name || '—'),
-    'Размер: ' + (t.sizeLabel || '—'),
-    'Площадь в упаковке: ' + t.pack + ' м²',
-    'Штук в упаковке: ' + (t.pieces != null ? t.pieces : '—'),
-    'Вес упаковки: ' + (t.weight != null ? t.weight + ' кг' : '—'),
-    'Склад: ' + warehouseName(),
-    'Остаток: ' + (warehouse.stock != null ? fmt(warehouse.stock, warehouse.stock % 1 ? 2 : 0) + ' м²' : 'уточняйте'),
-    'В резерве: ' + fmt(warehouse.reserved, warehouse.reserved % 1 ? 2 : 0) + ' м²',
-    'Доступно: ' + (warehouse.available != null ? fmt(warehouse.available, warehouse.available % 1 ? 2 : 0) + ' м²' : 'уточняйте'),
-    'Необходимая площадь: ' + document.getElementById('area').value + ' м²',
-    'Запас: ' + (reserveEl.value || '0') + '%',
-    'Цена за м²: ' + (priceEl.value || 'не указана') + ' руб',
-    'Упаковок: ' + document.getElementById('r-packs').textContent,
-    'Площадь к покупке: ' + document.getElementById('r-area').textContent,
-    'Штук всего: ' + document.getElementById('r-pieces').textContent,
-    'Вес всего: ' + document.getElementById('r-weight').textContent,
-    'Итого: ' + document.getElementById('r-total').textContent
-  ].join('\n');
-  copyToClipboard(text);
+  if(!lastState) return;
+  var lines = ['Смета плитки', 'Склад: ' + warehouseName(), ''];
+  var totalArea = 0, totalCost = 0, costUnknown = false;
+  for(var i=0;i<items.length;i++){
+    var res = computeItemResult(items[i]);
+    if(!res) continue;
+    var t = items[i].tile;
+    lines.push((i + 1) + '. ' + t.name + (t.sizeLabel ? ' (' + t.sizeLabel + ')' : '') +
+      ' — ' + fmt(res.packs) + ' уп. (' + fmt(res.buyArea, 2) + ' м²) — ' +
+      (isFinite(res.total) ? fmt(res.total, 0) + ' руб' : 'цена не указана'));
+    totalArea += res.buyArea;
+    if(isFinite(res.total)) totalCost += res.total; else costUnknown = true;
+  }
+  lines.push('');
+  lines.push('Площадь к покупке всего: ' + fmt(totalArea, 2) + ' м²');
+  lines.push('Итого: ' + fmt(totalCost, 0) + ' руб' + (costUnknown ? ' (не все позиции с ценой)' : ''));
+  copyToClipboard(lines.join('\n'));
 };
 
 window.copyShareLink = function(){
   if(!lastState) return;
-  var params = new URLSearchParams(lastState);
+  var params = new URLSearchParams();
+  params.set('warehouse', lastState.warehouse);
+  params.set('items', JSON.stringify(lastState.items));
   var url = window.location.origin + window.location.pathname + '?' + params.toString();
   copyToClipboard(url);
 };
@@ -835,38 +1115,8 @@ function copyToClipboard(text){
   }
 }
 
-function handleStockWarning(t, pack, packsNeeded){
-  var warn = document.getElementById('warn');
-  if(!warn){ return; }
-  var warnText = document.getElementById('warn-text');
-
-  var warehouse = warehouseStock(t);
-  if(warehouse.available == null){
-    warn.classList.remove('show');
-    return;
-  }
-  var packsAvail = Math.floor(warehouse.available / pack);
-  if(packsAvail < packsNeeded){
-    var shortPacks = packsNeeded - packsAvail;
-    var shortArea = shortPacks * pack;
-    if(warnText){
-      warnText.textContent = 'Внимание! На складе не хватает ' +
-        fmt(shortPacks) + ' упак (' + fmt(shortArea, 2) + ' кв.м)';
-    }
-    warn.classList.add('show');
-  }else{
-    warn.classList.remove('show');
-  }
-}
-
-function stockDetails(t){
-  var warehouse = warehouseStock(t);
-  if(warehouse.stock == null) return ' | Склад ' + warehouseName() + ': наличие уточняйте';
-  return ' | Склад ' + warehouseName() +
-    ': остаток ' + fmt(warehouse.stock, warehouse.stock%1?2:0) + ' м²' +
-    ', резерв ' + fmt(warehouse.reserved, warehouse.reserved%1?2:0) + ' м²' +
-    ', доступно ' + fmt(warehouse.available, warehouse.available%1?2:0) + ' м²';
-}
+addItem();
+startLoading();
 </script>
 </body>
 </html>
