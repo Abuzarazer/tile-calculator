@@ -15,6 +15,8 @@ const required = [
   'class="item-reserve"',
   "findAll(['склад','твер'])",
   "findAll(['резерв','твер'])",
+  "findAll(['статус','арт'])",
+  'function wagonStatus(t)',
   'Math.max(stock - reserved, 0)'
 ];
 required.forEach(function (value) {
@@ -33,6 +35,13 @@ const stockCheck = new vm.Script(
 ).runInNewContext();
 if (stockCheck.stock !== 100 || stockCheck.reserved !== 12 || stockCheck.available !== 88) {
   throw new Error('Неверный расчёт доступного остатка');
+}
+
+const wagonStatus = html.match(/function wagonStatus\(t\)\{[\s\S]*?\n\}/);
+if (!wagonStatus) throw new Error('Не найдена логика статуса вагона');
+const wagonCheck = new vm.Script(wagonStatus[0] + ';[wagonStatus({wagon:"в пути"}), wagonStatus({wagon:"не едет"}), wagonStatus({})]').runInNewContext();
+if (wagonCheck.join('|') !== 'Вагон едет|Вагон не едет|Вагон не едет') {
+  throw new Error('Неверный статус вагона: ' + wagonCheck.join('|'));
 }
 
 // расчёт позиции: по площади (с запасом) и по количеству упаковок

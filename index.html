@@ -566,8 +566,10 @@ function findCols(headers){
     stockMoscow: findAll(['склад','москва']),
     stockTver: findAll(['склад','твер']),
     reserveMoscow: findAll(['резерв','москва']),
-    reserveTver: findAll(['резерв','твер'])
+    reserveTver: findAll(['резерв','твер']),
+    wagon: find(['вагон','в пути'])
   };
+  if(idx.wagon === -1) idx.wagon = findAll(['статус','арт']);
   if(idx.stockMoscow === -1) idx.stockMoscow = find(['москва']);
   if(idx.stockMoscow === -1) idx.stockMoscow = find(['склад','остаток','остатки']);
   if(idx.article === -1) idx.article = 0;
@@ -622,6 +624,7 @@ function handleData(json, sheetName){
       var stockTverN = toNumber(cell(idx.stockTver));
       var reserveMoscowN = toNumber(cell(idx.reserveMoscow));
       var reserveTverN = toNumber(cell(idx.reserveTver));
+      var wagon = String(cell(idx.wagon)).trim();
       var packN   = toNumber(cell(idx.pack));
 
       if(!article && !name && !sizeRaw) continue;
@@ -654,7 +657,8 @@ function handleData(json, sheetName){
         stockMoscow: isFinite(stockMoscowN) ? stockMoscowN : null,
         stockTver: isFinite(stockTverN) ? stockTverN : null,
         reserveMoscow: isFinite(reserveMoscowN) ? reserveMoscowN : 0,
-        reserveTver: isFinite(reserveTverN) ? reserveTverN : 0
+        reserveTver: isFinite(reserveTverN) ? reserveTverN : 0,
+        wagon: wagon
       });
     }
   }catch(e){ }
@@ -746,11 +750,16 @@ function warehouseStock(t){
   };
 }
 
+function wagonStatus(t){
+  var text = String(t.wagon || "").toLowerCase();
+  return /едет|в\s*пути/.test(text) && !/не\s*(едет|идет)/.test(text) ? "Вагон едет" : "Вагон не едет";
+}
+
 function stockStatus(t){
   var warehouse = warehouseStock(t);
-  if(warehouse.available == null) return { text: 'Наличие уточняйте', className: 'stock-unknown', pillClass: 'pill-unknown' };
+  if(warehouse.available == null) return { text: 'Нет в наличии · ' + wagonStatus(t), className: 'stock-none', pillClass: 'pill-none' };
   var packs = Math.floor(warehouse.available / t.pack);
-  if(packs <= 0) return { text: 'Нет в наличии', className: 'stock-none', pillClass: 'pill-none' };
+  if(packs <= 0) return { text: 'Нет в наличии · ' + wagonStatus(t), className: 'stock-none', pillClass: 'pill-none' };
   if(packs <= 5) return { text: 'Мало · ' + packs + ' уп.', className: 'stock-low', pillClass: 'pill-low' };
   return { text: 'В наличии', className: 'stock-ok', pillClass: 'pill-ok' };
 }
@@ -1112,7 +1121,7 @@ function renderItemResult(item, res){
     '</div>' +
     '<div class="item-result-total"><span>Стоимость позиции</span><span class="v">' + (isFinite(res.total) ? fmt(res.total, 0) + ' руб' : 'укажите цену') + '</span></div>' +
     (res.reserve > 0 ? '<div class="field-hint">Запас ' + fmt(res.reserve) + '%: ' + fmt(res.areaWithReserve, 2) + ' м²</div>' : '') +
-    (warehouse.stock != null ? '<div class="field-hint">Склад ' + warehouseName() + ': доступно ' + fmt(warehouse.available, warehouse.available%1?2:0) + ' м²</div>' : '') +
+     '<div class="field-hint">Склад ' + warehouseName() + ': ' + (warehouse.stock != null ? 'доступно ' + fmt(warehouse.available, warehouse.available%1?2:0) + ' м²' : 'нет в наличии') + (warehouse.available == null || warehouse.available <= 0 ? ' · ' + wagonStatus(t) : '') + '</div>' +
     (res.shortage ? '<div class="item-warn">⚠️ Не хватает ' + fmt(res.shortage.shortPacks) + ' упак (' + fmt(res.shortage.shortArea, 2) + ' м²)</div>' : '');
 }
 
