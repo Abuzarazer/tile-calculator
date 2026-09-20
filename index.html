@@ -751,8 +751,7 @@ function warehouseStock(t){
 }
 
 function wagonStatus(t){
-  var text = String(t.wagon || "").toLowerCase();
-  return /едет|в\s*пути/.test(text) && !/не\s*(едет|идет)/.test(text) ? "Вагон едет" : "Вагон не едет";
+  return String(t.wagon || "").trim() ? "Вагон едет" : "Вагон не едет";
 }
 
 function stockStatus(t){

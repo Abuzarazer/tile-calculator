@@ -39,9 +39,9 @@ if (stockCheck.stock !== 100 || stockCheck.reserved !== 12 || stockCheck.availab
 
 const wagonStatus = html.match(/function wagonStatus\(t\)\{[\s\S]*?\n\}/);
 if (!wagonStatus) throw new Error('Не найдена логика статуса вагона');
-const wagonCheck = new vm.Script(wagonStatus[0] + ';[wagonStatus({wagon:"в пути"}), wagonStatus({wagon:"не едет"}), wagonStatus({})]').runInNewContext();
-if (wagonCheck.join('|') !== 'Вагон едет|Вагон не едет|Вагон не едет') {
-  throw new Error('Неверный статус вагона: ' + wagonCheck.join('|'));
+const wagonCheck = new vm.Script(wagonStatus[0] + ';[wagonStatus({wagon:"Патриция Стон 964"}), wagonStatus({})]').runInNewContext();
+if (wagonCheck.join("|") !== "Вагон едет|Вагон не едет") {
+  throw new Error("Неверный статус вагона: " + wagonCheck.join("|"));
 }
 
 // расчёт позиции: по площади (с запасом) и по количеству упаковок
