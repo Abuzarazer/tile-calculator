@@ -15,8 +15,9 @@ const required = [
   'class="item-reserve"',
   "findAll(['склад','твер'])",
   "findAll(['резерв','твер'])",
-  "findAll(['статус','арт'])",
+  "find(['вагон','в пути'])",
   'function wagonStatus(t)',
+  'function stockDetails(t)',
   'Math.max(stock - reserved, 0)'
 ];
 required.forEach(function (value) {
@@ -42,6 +43,43 @@ if (!wagonStatus) throw new Error('Не найдена логика статус
 const wagonCheck = new vm.Script(wagonStatus[0] + ';[wagonStatus({wagon:"Патриция Стон 964"}), wagonStatus({})]').runInNewContext();
 if (wagonCheck.join("|") !== "Вагон едет|Вагон не едет") {
   throw new Error("Неверный статус вагона: " + wagonCheck.join("|"));
+}
+
+// статусы наличия: резерв съел остаток, данных нет, реальный ноль, норма
+const stockStatusFn = html.match(/function stockStatus\(t\)\{[\s\S]*?\n\}/);
+const stockDetailsFn = html.match(/function stockDetails\(t\)\{[\s\S]*?\n\}/);
+const fmtFn = html.match(/function fmt\(n, dec\)\{[\s\S]*?\n\}/);
+const warehouseNameFn = html.match(/function warehouseName\(\)\{[\s\S]*?\n\}/);
+if (!stockStatusFn || !stockDetailsFn) throw new Error('Не найдена логика статуса наличия');
+
+const statusCtx = { ACTIVE_WAREHOUSE: 'moscow' };
+vm.createContext(statusCtx);
+new vm.Script(
+  fmtFn[0] + warehouseNameFn[0] + warehouseStock[0] + wagonStatus[0] + stockDetailsFn[0] + stockStatusFn[0]
+).runInContext(statusCtx);
+
+// Минерал Грей: остаток 74.92, резерв 79.2 -> свободного нет, но товар на складе есть
+const allReserved = statusCtx.stockStatus({ pack: 1.44, stockMoscow: 74.92, reserveMoscow: 79.2, wagon: '576' });
+if (allReserved.text.indexOf('Всё в резерве') !== 0) {
+  throw new Error('Остаток под резервом должен читаться как «Всё в резерве»: ' + allReserved.text);
+}
+const allReservedLine = statusCtx.stockDetails({ pack: 1.44, stockMoscow: 74.92, reserveMoscow: 79.2, wagon: '576' });
+if (allReservedLine.indexOf('74.92') === -1 || allReservedLine.indexOf('79.20') === -1) {
+  throw new Error('Расшифровка склада обязана показывать остаток и резерв: ' + allReservedLine);
+}
+
+// нет данных по складу — это не «нет в наличии»
+const unknown = statusCtx.stockStatus({ pack: 1.44, stockMoscow: null, reserveMoscow: 0, wagon: '' });
+if (unknown.pillClass !== 'pill-unknown') {
+  throw new Error('Пустой остаток нельзя выдавать за отсутствие товара: ' + unknown.text);
+}
+
+// настоящий ноль и нормальный остаток
+if (statusCtx.stockStatus({ pack: 1.44, stockMoscow: 0, reserveMoscow: 0, wagon: '' }).text.indexOf('Нет в наличии') !== 0) {
+  throw new Error('Нулевой остаток должен читаться как «Нет в наличии»');
+}
+if (statusCtx.stockStatus({ pack: 1.44, stockMoscow: 183.6, reserveMoscow: 53.28, wagon: '' }).pillClass !== 'pill-ok') {
+  throw new Error('Свободный остаток должен читаться как «В наличии»');
 }
 
 // расчёт позиции: по площади (с запасом) и по количеству упаковок

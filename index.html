@@ -569,7 +569,9 @@ function findCols(headers){
     reserveTver: findAll(['резерв','твер']),
     wagon: find(['вагон','в пути'])
   };
-  if(idx.wagon === -1) idx.wagon = findAll(['статус','арт']);
+  // без колонки «вагон» статус не угадываем: «Статус арт.» содержит «рабочий арт»/«убираем»,
+  // а не сведения о поставке — иначе каждый товар станет «Вагон едет»
+  if(idx.wagon === -1) idx.wagon = find(['в пути','в дороге','поставк']);
   if(idx.stockMoscow === -1) idx.stockMoscow = find(['москва']);
   if(idx.stockMoscow === -1) idx.stockMoscow = find(['склад','остаток','остатки']);
   if(idx.article === -1) idx.article = 0;
@@ -754,10 +756,27 @@ function wagonStatus(t){
   return String(t.wagon || "").trim() ? "Вагон едет" : "Вагон не едет";
 }
 
+/* подробная расшифровка склада: остаток, резерв и что из этого реально свободно */
+function stockDetails(t){
+  var w = warehouseStock(t);
+  var head = 'Склад ' + warehouseName() + ': ';
+  if(w.stock == null) return head + 'данных нет · ' + wagonStatus(t);
+
+  var dec = function(n){ return fmt(n, n % 1 ? 2 : 0) + ' м²'; };
+  var line = 'остаток ' + dec(w.stock);
+  if(w.reserved > 0) line += ', в резерве ' + dec(w.reserved);
+  line += ', свободно ' + dec(w.available);
+  if(w.available <= 0) line += ' · ' + wagonStatus(t);
+  return head + line;
+}
+
 function stockStatus(t){
   var warehouse = warehouseStock(t);
-  if(warehouse.available == null) return { text: 'Нет в наличии · ' + wagonStatus(t), className: 'stock-none', pillClass: 'pill-none' };
+  // нет данных по складу — это не то же самое, что «товара нет»
+  if(warehouse.available == null) return { text: 'Наличие уточняйте · ' + wagonStatus(t), className: 'stock-unknown', pillClass: 'pill-unknown' };
   var packs = Math.floor(warehouse.available / t.pack);
+  // остаток есть, но он весь под резервом — свободного нет, а товар на складе лежит
+  if(packs <= 0 && warehouse.stock > 0) return { text: 'Всё в резерве · ' + wagonStatus(t), className: 'stock-none', pillClass: 'pill-none' };
   if(packs <= 0) return { text: 'Нет в наличии · ' + wagonStatus(t), className: 'stock-none', pillClass: 'pill-none' };
   if(packs <= 5) return { text: 'Мало · ' + packs + ' уп.', className: 'stock-low', pillClass: 'pill-low' };
   return { text: 'В наличии', className: 'stock-ok', pillClass: 'pill-ok' };
@@ -930,7 +949,10 @@ function createItemRow(item){
                   ' · В упаковке: ' + t.pack + ' м²' +
                   (t.price != null ? ' · ' + fmt(t.price) + ' ₽' : '') +
                   ' · <span class="stock ' + availability.className + '">' + availability.text + '</span>' +
-                  (warehouse.stock != null ? ' · Доступно: ' + fmt(warehouse.available, warehouse.available%1?2:0) + ' м²' : '') +
+                  (warehouse.stock != null
+                    ? ' · Свободно: ' + fmt(warehouse.available, warehouse.available%1?2:0) + ' м²' +
+                      (warehouse.reserved > 0 ? ' (остаток ' + fmt(warehouse.stock, warehouse.stock%1?2:0) + ', резерв ' + fmt(warehouse.reserved, warehouse.reserved%1?2:0) + ')' : '')
+                    : '') +
                 '</div>' +
               '</div>';
     }
@@ -1120,7 +1142,7 @@ function renderItemResult(item, res){
     '</div>' +
     '<div class="item-result-total"><span>Стоимость позиции</span><span class="v">' + (isFinite(res.total) ? fmt(res.total, 0) + ' руб' : 'укажите цену') + '</span></div>' +
     (res.reserve > 0 ? '<div class="field-hint">Запас ' + fmt(res.reserve) + '%: ' + fmt(res.areaWithReserve, 2) + ' м²</div>' : '') +
-     '<div class="field-hint">Склад ' + warehouseName() + ': ' + (warehouse.stock != null ? 'доступно ' + fmt(warehouse.available, warehouse.available%1?2:0) + ' м²' : 'нет в наличии') + (warehouse.available == null || warehouse.available <= 0 ? ' · ' + wagonStatus(t) : '') + '</div>' +
+    '<div class="field-hint">' + stockDetails(t) + '</div>' +
     (res.shortage ? '<div class="item-warn">⚠️ Не хватает ' + fmt(res.shortage.shortPacks) + ' упак (' + fmt(res.shortage.shortArea, 2) + ' м²)</div>' : '');
 }
 
